@@ -3,6 +3,8 @@ Cerb5 Plugins - wgm.freshbooks
 Copyright (C) 2011 WebGroup Media, LLC.  
 [http://www.cerberusweb.com/](http://www.cerberusweb.com/)  
 
+![](https://github.com/cerb5-plugins/wgm.freshbooks/wiki/freshbooks_plugin.png)
+
 Experimental
 ------------
 This plugin is currently being developed and is offered on an experimental basis.
