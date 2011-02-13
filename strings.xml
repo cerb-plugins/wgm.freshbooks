@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tmx SYSTEM "tmx14.dtd">
+<tmx version="1.4">
+	<header datatype="winres" segtype="sentence" adminlang="en-us" srclang="en-us" o-tmf="abc" />
+	<body>
+
+	<!-- Freshbooks -->
+	
+	<tu tuid='wgm.freshbooks.common'>
+		<tuv xml:lang="en_US"><seg>Freshbooks</seg></tuv>
+	</tu>
+	<tu tuid='wgm.freshbooks.common.freshbooks_clients'>
+		<tuv xml:lang="en_US"><seg>Freshbooks Clients</seg></tuv>
+	</tu>
+	
+	<tu tuid='wgm.freshbooks.common.api_authentication'>
+		<tuv xml:lang="en_US"><seg>Freshbooks API Authentication</seg></tuv>
+	</tu>
+	<tu tuid='wgm.freshbooks.common.api_authentication.url'>
+		<tuv xml:lang="en_US"><seg>API URL</seg></tuv>
+	</tu>
+	<tu tuid='wgm.freshbooks.common.api_authentication.token'>
+		<tuv xml:lang="en_US"><seg>Secret Token</seg></tuv>
+	</tu>
+	
+	<!-- DAO -->
+	
+	<tu tuid='dao.wgm_freshbooks_client.client_id'>
+		<tuv xml:lang="en_US"><seg>Client ID</seg></tuv>
+	</tu>
+	<tu tuid='dao.wgm_freshbooks_client.data_json'>
+		<tuv xml:lang="en_US"><seg>Data (JSON)</seg></tuv>
+	</tu>
+	<!--
+	<tu tuid='dao.wgm_freshbooks_client.org_id'>
+		<tuv xml:lang="en_US"><seg>Organization ID</seg></tuv>
+	</tu>
+	-->
+	<tu tuid='dao.wgm_freshbooks_client.synchronized'>
+		<tuv xml:lang="en_US"><seg>Synchronized</seg></tuv>
+	</tu>
+		
+	</body>
+</tmx>

@@ -1,0 +1,106 @@
+<!DOCTYPE plugin SYSTEM "../../libs/devblocks/plugin.dtd">
+<plugin>
+	<id>wgm.freshbooks</id>
+	<name>[WGM] Freshbooks Integration</name>
+	<description>Integrates with Freshbooks for synchronizing customer contact information, generating estimates, logging paid time against client projects, etc.  Plugin development was sponsored by Nolan Interactive - http://www.nolaninteractive.com/</description>
+	<author>WebGroup Media, LLC.</author>
+	<revision>1</revision>
+	<link>http://www.cerb5.com/</link>
+	<image>plugin.png</image>
+ 
+	<!-- Plugin Dependencies -->
+	
+	<dependencies>
+		<require plugin_id="cerberusweb.core" version="5.3.0" />
+	</dependencies>
+
+	<!-- Patches -->
+	
+	<patches>
+		<patch version="5.3.0" revision="2" file="patches/5.3.0.php" />
+	</patches>
+	
+	<!-- Exported Classes -->
+	
+	<class_loader>
+		<file path="api/App.php">
+			<class name="WgmFreshbooksAPI" />
+		</file>
+		<file path="api/dao/wgm_freshbooks_client.php">
+			<class name="DAO_WgmFreshbooksClient" />
+			<class name="Model_WgmFreshbooksClient" />
+			<class name="SearchFields_WgmFreshbooksClient" />
+			<class name="View_WgmFreshbooksClient" />
+		</file>
+	</class_loader>
+
+	<!-- Templates -->
+	
+	<!--
+	<templates set="example.template.namespace">
+		<template path="path/to/template.tpl" />
+	</templates>
+	-->	
+
+	<!-- Extensions -->
+ 
+	<extensions>
+
+		<!-- Controller -->
+		
+		<extension point="devblocks.controller">
+			<id>wgm.freshbooks.controller</id>
+			<name>Freshbooks Controller</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFreshbooksController</name>
+			</class>
+			<params>
+				<param key="uri" value="wgm.freshbooks" />
+			</params>
+		</extension>
+
+		<!-- Config Tab -->
+
+		<extension point="cerberusweb.config.tab">
+			<id>wgm.freshbooks.config_tab</id>
+			<name>Freshbooks Config Tab</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFreshbooksConfigTab</name>
+			</class>
+			<params>
+				<param key="uri" value="freshbooks" />
+    			<param key="title" value="wgm.freshbooks.common" />
+			</params>
+		</extension>
+		
+		<!-- Address Book Tabs -->
+		
+		<extension point="cerberusweb.contacts.tab">
+			<id>wgm.freshbooks.contacts_tab</id>
+			<name>Freshbooks Contacts Tab</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFreshbooksContactsTab</name>
+			</class>
+			<params>
+				<param key="uri" value="freshbooks" />
+    			<param key="title" value="wgm.freshbooks.common" />
+			</params>
+		</extension>
+		
+		<!-- Scheduled Jobs -->
+		
+		<extension point="cerberusweb.cron">
+			<id>wgm.freshbooks.cron.sync</id>
+			<name>Freshbooks Synchronize Cron</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFreshbooksSyncCron</name>
+			</class>
+			<params />
+		</extension>
+		
+    </extensions> 
+</plugin>
