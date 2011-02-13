@@ -35,5 +35,9 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
+Screenshots
+-----------
+### Configuring API authentication
 ![](https://github.com/cerb5-plugins/wgm.freshbooks/wiki/freshbooks_config.png)
+### Linking Freshbooks clients to Cerb5 organizations
 ![](https://github.com/cerb5-plugins/wgm.freshbooks/wiki/freshbooks_link_orgs.png)
