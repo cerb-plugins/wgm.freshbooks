@@ -11,7 +11,8 @@ This plugin is currently being developed and is offered on an experimental basis
 
 What's this?
 ------------
-This plugin integrates Freshbooks into Cerb5 for synchronizing customer contact information, generating estimates, logging paid time against client projects, etc.
+This plugin integrates [Freshbooks](https://webgroupmedia.freshbooks.com/refer/www
+) into Cerb5 for synchronizing customer contact information, generating estimates, logging paid time against client projects, etc.
 
 Installation
 ------------
