@@ -5,7 +5,7 @@
 	<description>Integrates with Freshbooks for synchronizing customer contact information, generating estimates, logging paid time against client projects, etc.  Plugin development was sponsored by Nolan Interactive - http://www.nolaninteractive.com/</description>
 	<author>WebGroup Media, LLC.</author>
 	<revision>1</revision>
-	<link>http://www.cerb5.com/</link>
+	<link>https://github.com/cerb5-plugins/wgm.freshbooks</link>
 	<image>plugin.png</image>
  
 	<!-- Plugin Dependencies -->

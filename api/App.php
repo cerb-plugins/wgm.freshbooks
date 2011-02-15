@@ -304,12 +304,89 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
 		$logger->info("Started");
 			
+		$this->_downloadClients();
 		$this->_synchronizeClients();
 		
 		$logger->info("Finished");
 	}
 	
 	private function _synchronizeClients() {
+		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
+		$freshbooks = WgmFreshbooksAPI::getInstance();
+		
+		// Retrieve clients that have changed since their sync date with org_id != 0
+		$loops = 0;
+		$synched = 0;
+		do {
+			$clients = DAO_WgmFreshbooksClient::getWhere(sprintf("%s != 0 AND %s > %s",
+					DAO_WgmFreshbooksClient::ORG_ID,
+					DAO_WgmFreshbooksClient::UPDATED,
+					DAO_WgmFreshbooksClient::SYNCHRONIZED
+				),
+				DAO_WgmFreshbooksClient::UPDATED,
+				true,
+				100
+			);
+			
+			foreach($clients as $client_id => $client) { /* @var $client Model_WgmFreshbooksClient */
+				//var_dump($client->data);
+				
+				// Load + compare email info
+				if(!empty($client->email_id) && null != ($address = DAO_Address::get($client->email_id))) {
+					$fields = array();
+					
+					if(!empty($client->data['first_name']))
+						$fields[DAO_Address::FIRST_NAME] = $client->data['first_name'];
+					if(!empty($client->data['last_name']))
+						$fields[DAO_Address::LAST_NAME] = $client->data['last_name'];
+						
+					if(!empty($fields))
+						DAO_Address::update($address->id, $fields);
+				}
+				
+				// Load + compare org info
+				if(!empty($client->org_id) && null != ($org = DAO_ContactOrg::get($client->org_id))) {
+					$fields = array();
+					
+					if(!empty($client->data['organization']))
+						$fields[DAO_ContactOrg::NAME] = $client->data['organization'];
+					if(!empty($client->data['work_phone']))
+						$fields[DAO_ContactOrg::PHONE] = $client->data['work_phone'];
+						
+					$street = '';
+					if(!empty($client->data['p_street1']))
+						$street .= $client->data['p_street1'];
+					if(!empty($client->data['p_street2']))
+						$street .= "\n" . $client->data['p_street2'];
+					if(!empty($street))
+						$fields[DAO_ContactOrg::STREET] = $street;
+						
+					if(!empty($client->data['p_city']))
+						$fields[DAO_ContactOrg::CITY] = $client->data['p_city'];
+					if(!empty($client->data['p_state']))
+						$fields[DAO_ContactOrg::PROVINCE] = $client->data['p_state'];
+					if(!empty($client->data['p_code']))
+						$fields[DAO_ContactOrg::POSTAL] = $client->data['p_code'];
+					if(!empty($client->data['p_country']))
+						$fields[DAO_ContactOrg::COUNTRY] = $client->data['p_country'];
+					
+					if(!empty($fields))
+						DAO_ContactOrg::update($org->id, $fields);
+				}
+				
+				// Update synchronized timestamp
+				DAO_WgmFreshbooksClient::update($client_id, array(
+					DAO_WgmFreshbooksClient::SYNCHRONIZED => time(),
+				));
+				$synched++;
+			}
+			
+		} while(!empty($clients) && ++$loops < 25);
+		
+		$logger->info(sprintf("Synchronized %d local client records", $synched));
+	}
+	
+	private function _downloadClients() {
 		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
 		$freshbooks = WgmFreshbooksAPI::getInstance();
 		
@@ -359,8 +436,13 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 				
 				// Pull the updated date
 				$updated_str = (string) $xml_client->updated;
-				if(false === ($updated = strtotime($updated_str)))
+				if(false === ($updated = strtotime($updated_str))) {
 					$updated = time();
+				} else {
+					$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
+					$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+					$updated = strtotime($date->format('Y-m-d H:i:s'));
+				}
 				
 				$fields = array(
 					DAO_WgmFreshbooksClient::ACCOUNT_NAME => (string) $xml_client->organization,
@@ -387,7 +469,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 			
 		} while($page < $num_pages);
 		
-		$logger->info(sprintf("Updated %d local client records", $total));
+		$logger->info(sprintf("Downloaded %d updated client records", $total));
 		
 		// [TODO] Enable keys
 		
