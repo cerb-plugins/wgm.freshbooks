@@ -139,21 +139,6 @@ class WgmFreshbooksController extends DevblocksControllerExtension {
 		return;
 	}
 	
-	function testAuthenticationAction() {
-		@$api_url = DevblocksPlatform::importGPC($_POST['api_url'],'string','');
-		@$api_token = DevblocksPlatform::importGPC($_POST['api_token'],'string','');
-
-		$freshbooks = WgmFreshbooksAPI::getInstance();
-		
-		// Test credentials
-		$username = $freshbooks->testAuthentication($api_url, $api_token);
-		
-		if(!empty($username))
-			echo 'Success! Logged in as ' . $username;
-		else
-			echo 'Authentication failed!';
-	}
-	
 	function invoicesAction() {
 		$freshbooks = WgmFreshbooksAPI::getInstance();
 
@@ -261,8 +246,10 @@ class WgmFreshbooksController extends DevblocksControllerExtension {
 	}
 };	
 
-class WgmFreshbooksConfigTab extends Extension_ConfigTab {
-	function showTab() {
+class WgmFreshbooks_SetupPageSection extends Extension_PageSection {
+	const ID = 'wgm.freshbooks.setup.section.freshbooks';
+	
+	function render() {
 		$tpl = DevblocksPlatform::getTemplateService();
 
 		$params = array();
@@ -270,17 +257,62 @@ class WgmFreshbooksConfigTab extends Extension_ConfigTab {
 		$params['api_token'] = DevblocksPlatform::getPluginSetting('wgm.freshbooks','api_token','');
 		$tpl->assign('params', $params);
 		
-		$tpl->display('devblocks:wgm.freshbooks::config/tab.tpl');		
+		$tpl->display('devblocks:wgm.freshbooks::config/section.tpl');		
 	}
 	
-	function saveTab() {
-		@$api_url = DevblocksPlatform::importGPC($_POST['api_url'],'string','');
-		@$api_token = DevblocksPlatform::importGPC($_POST['api_token'],'string','');
-
-		DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_url',$api_url);		
-		DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_token',$api_token);		
+	function saveAction() {
+		try {
+			@$api_url = DevblocksPlatform::importGPC($_POST['api_url'],'string','');
+			@$api_token = DevblocksPlatform::importGPC($_POST['api_token'],'string','');
+	
+			DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_url',$api_url);		
+			DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_token',$api_token);		
+				
+		    echo json_encode(array('status'=>true, 'message'=>'Saved!'));
+		    return;
+			
+		} catch(Exception $e) {
+			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
+			return;
+		}		
+		
 	}
-};
+
+	function testAuthenticationAction() {
+		try {
+			@$api_url = DevblocksPlatform::importGPC($_POST['api_url'],'string','');
+			@$api_token = DevblocksPlatform::importGPC($_POST['api_token'],'string','');
+	
+			$freshbooks = WgmFreshbooksAPI::getInstance();
+			
+			// Test credentials
+			$username = $freshbooks->testAuthentication($api_url, $api_token);
+			
+			if(!empty($username))
+				$message = 'Success! Logged in as ' . $username;
+			else
+				throw new Exception('Authentication failed!');
+				
+		    echo json_encode(array('status'=>true, 'message'=>$message));
+		    return;
+			
+		} catch(Exception $e) {
+			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
+			return;
+		}
+		
+	}
+	
+}
+
+class WgmFreshbooks_SetupPluginsMenuItem extends Extension_PageMenuItem {
+	const ID = 'wgm.freshbooks.setup.menu.plugins.freshbooks';
+	
+	function render() {
+		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl->display('devblocks:wgm.freshbooks::config/menu_item.tpl');
+	}
+}
 
 class WgmFreshbooksContactsTab extends Extension_AddressBookTab {
 	function showTab() {

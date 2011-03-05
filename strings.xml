@@ -14,7 +14,7 @@
 	</tu>
 	
 	<tu tuid='wgm.freshbooks.common.api_authentication'>
-		<tuv xml:lang="en_US"><seg>Freshbooks API Authentication</seg></tuv>
+		<tuv xml:lang="en_US"><seg>API Authentication</seg></tuv>
 	</tu>
 	<tu tuid='wgm.freshbooks.common.api_authentication.url'>
 		<tuv xml:lang="en_US"><seg>API URL</seg></tuv>

@@ -1,7 +1,10 @@
+<h2>{'wgm.freshbooks.common'|devblocks_translate}</h2>
+
 <form id="frmFreshbooksConfigTab" action="{devblocks_url}c=config{/devblocks_url}" method="POST" onsubmit="return false;">
 <input type="hidden" name="c" value="config">
-<input type="hidden" name="a" value="saveTab">
-<input type="hidden" name="ext_id" value="wgm.freshbooks.config_tab">
+<input type="hidden" name="a" value="handleSectionAction">
+<input type="hidden" name="section" value="freshbooks">
+<input type="hidden" name="action" value="save">
 
 <fieldset>
 	<legend>{'wgm.freshbooks.common.api_authentication'|devblocks_translate}</legend>
@@ -22,10 +25,11 @@
 			</td>
 		</tr>
 	</table>
+
+	<div class="status"></div>
 	
 	<button type="button" class="submit"><span class="cerb-sprite sprite-check"></span> {'common.save_changes'|devblocks_translate|capitalize}</button>
 	<button type="button" class="tester"><span class="cerb-sprite sprite-gear"></span> Test</button>
-	<span class="status" style="display:none;font-weight:bold;background-color:rgb(242,222,105);padding:5px;"></span>
 </fieldset>
 
 </form>
@@ -33,15 +37,35 @@
 <script>
 	$frm = $('#frmFreshbooksConfigTab');
 	$frm.find('BUTTON.submit').click(function() {
-		$button = $(this);
-		genericAjaxPost('frmFreshbooksConfigTab','','',function() {
-			$button.siblings('SPAN.status').clearQueue().html('Saved!').fadeIn('fast').delay('3000').fadeOut('slow');
+		Devblocks.showSuccess('#frmFreshbooksConfigTab div.status', "Saving...", false, false);
+
+		$(this.form).find('input:hidden[name=action]').val('save');
+
+		genericAjaxPost('frmFreshbooksConfigTab','',null,function(json) {
+			$o = $.parseJSON(json);
+			if(false == $o || false == $o.status) {
+				Devblocks.showError('#frmFreshbooksConfigTab div.status',$o.error);
+			} else {
+				Devblocks.showSuccess('#frmFreshbooksConfigTab div.status',$o.message);
+			}
+			
+			$this.show();
 		});
 	});
 	$frm.find('BUTTON.tester').click(function() {
-		$button = $(this);
-		genericAjaxPost('frmFreshbooksConfigTab','','c=wgm.freshbooks&a=testAuthentication',function(html) {
-			$button.siblings('SPAN.status').clearQueue().html(html).fadeIn('fast').delay('3000').fadeOut('slow');
+		Devblocks.showSuccess('#frmFreshbooksConfigTab div.status', "Testing... please wait.", false, false);
+		
+		$(this.form).find('input:hidden[name=action]').val('testAuthentication');
+		
+		genericAjaxPost('frmFreshbooksConfigTab','',null,function(json) {
+			$o = $.parseJSON(json);
+			if(false == $o || false == $o.status) {
+				Devblocks.showError('#frmFreshbooksConfigTab div.status',$o.error);
+			} else {
+				Devblocks.showSuccess('#frmFreshbooksConfigTab div.status',$o.message);
+			}
+			
+			$this.show();
 		});
 	});
 </script>
