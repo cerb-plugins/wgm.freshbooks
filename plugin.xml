@@ -25,6 +25,7 @@
 	<class_loader>
 		<file path="api/App.php">
 			<class name="WgmFreshbooksAPI" />
+			<class name="WgmFreshbooksHelper" />
 		</file>
 		<file path="api/dao/wgm_freshbooks_client.php">
 			<class name="DAO_WgmFreshbooksClient" />
@@ -113,6 +114,21 @@
 			<class>
 				<file>api/App.php</file>
 				<name>WgmFreshbooksContactsTab</name>
+			</class>
+			<params>
+				<param key="uri" value="freshbooks" />
+    			<param key="title" value="wgm.freshbooks.common" />
+			</params>
+		</extension>
+		
+		<!-- Org Tabs -->
+		
+		<extension point="cerberusweb.org.tab">
+			<id>wgm.freshbooks.org_tab</id>
+			<name>Freshbooks Org Tab</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFreshbooksOrgTab</name>
 			</class>
 			<params>
 				<param key="uri" value="freshbooks" />

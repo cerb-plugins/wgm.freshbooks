@@ -74,8 +74,43 @@ class WgmFreshbooksAPI {
 		if(false == ($xml = $this->_execute($request_xml->asXML())))
 			return false;
 			
-		if(0 != strcasecmp((string)$xml['status'],'ok'))
+		if(0 != strcasecmp((string)$xml['status'],'ok')) {
 			return false;
+		}
+			
+		return $xml;
+	}
+	
+	/**
+	 * 
+	 * @param string $method
+	 * @param string $element
+	 * @param array $params
+	 * @return SimpleXMLElement|false
+	 */
+	function create($method, $element, $params=array()) {
+		$request_xml = simplexml_load_string(sprintf(
+			"<?xml version='1.0' encoding='utf-8'?>".
+			"<request method='%s'>".
+			"</request>",
+			$method
+		)); /* @var $request_xml SimpleXMLElement */
+		
+		if(false === $request_xml)
+			return false;
+		
+		$element_xml = $request_xml->addChild($element);
+		
+		if(is_array($params))
+		foreach($params as $key => $value)
+			$element_xml->addChild($key, $value);
+		
+		if(false == ($xml = $this->_execute($request_xml->asXML())))
+			return false;
+			
+		if(0 != strcasecmp((string)$xml['status'],'ok')) {
+			return false;
+		}
 			
 		return $xml;
 	}
@@ -99,6 +134,56 @@ EOF;
 			return false;
 		
 		return $username;
+	}
+}
+
+class WgmFreshbooksHelper {
+	static function importOrSyncClientXml($xml_client) {
+		$client_id = (integer) $xml_client->client_id;
+
+		if(empty($client_id))
+			return false;
+		
+		// Lookup/created the email address
+		$email = (string) $xml_client->email;
+		$email_id = 0;
+		if(!empty($email)) {
+			if(null != ($address = DAO_Address::lookupAddress($email, true)))
+				$email_id = $address->id; 
+		}
+		
+		// Pull the updated date
+		$updated_str = (string) $xml_client->updated;
+		if(false === ($updated = strtotime($updated_str))) {
+			$updated = time();
+		} else {
+			$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
+			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+			$updated = strtotime($date->format('Y-m-d H:i:s'));
+		}
+		
+		$fields = array(
+			DAO_WgmFreshbooksClient::ACCOUNT_NAME => (string) $xml_client->organization,
+			DAO_WgmFreshbooksClient::UPDATED => $updated,
+			DAO_WgmFreshbooksClient::EMAIL_ID => $email_id,
+			DAO_WgmFreshbooksClient::DATA_JSON => json_encode(new SimpleXMLElement($xml_client->asXML(), LIBXML_NOCDATA)),
+		);
+		
+		// Insert/Update
+		if(null == ($model = DAO_WgmFreshbooksClient::get($client_id))) {
+			$fields[DAO_WgmFreshbooksClient::ID] = $client_id;
+			DAO_WgmFreshbooksClient::create($fields);
+			
+		} else {
+			DAO_WgmFreshbooksClient::update($client_id, $fields);
+			
+		}
+		
+		// Refresh model
+		if(null == ($model = DAO_WgmFreshbooksClient::get($client_id)))
+			return false;
+		
+		return $model;
 	}
 }
 
@@ -203,6 +288,53 @@ class WgmFreshbooksController extends DevblocksControllerExtension {
 		return $xml;
 	}
 	*/
+	
+	function doOrgAddClientAction() {
+		@$org_id = DevblocksPlatform::importGPC($_POST['org_id'],'integer',0);
+		@$name = DevblocksPlatform::importGPC($_POST['name'],'string','');
+		@$email = DevblocksPlatform::importGPC($_POST['email'],'string','');
+		@$first_name = DevblocksPlatform::importGPC($_POST['first_name'],'string','');
+		@$last_name = DevblocksPlatform::importGPC($_POST['last_name'],'string','');
+		
+		$freshbooks = WgmFreshbooksAPI::getInstance();
+
+		// Add to Freshbooks through API
+		$params = array(
+			'first_name' => $first_name,
+			'last_name' => $last_name,
+			'organization' => $name,
+			'email' => $email,
+		);
+		
+		if(false == ($xml = $freshbooks->create('client.create', 'client', $params))) {
+			//var_dump($xml);
+			return false;
+		}
+		
+		$client_id = (integer) $xml->client_id;
+		
+		if(empty($client_id))
+			return false;
+			
+		// Retrieve fresh XML
+		if(false == ($xml = $freshbooks->request('client.get', array('client_id'=>$client_id)))) {
+			//var_dump($xml);
+			return false;
+		}
+		
+		// Add to local database
+		if(null == ($model = WgmFreshbooksHelper::importOrSyncClientXml($xml->client)))
+			return false;
+			
+		//var_dump($model);
+
+		// Link org_id<->client_id and mark synchronized
+		DAO_WgmFreshbooksClient::update($model->id, array(
+			DAO_WgmFreshbooksClient::ORG_ID => $org_id,
+			DAO_WgmFreshbooksClient::SYNCHRONIZED => time(),
+		));
+		
+	}
 	
 	function viewSetOrgsAction() {
 		@$client_ids = DevblocksPlatform::importGPC($_POST['client_id'],'array',array());
@@ -456,44 +588,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 			$total = (integer) $xml->clients['total'];
 	
 			foreach($xml->clients->client as $xml_client) {
-				$client_id = (integer) $xml_client->client_id;
-				
-				// Lookup/created the email address
-				$email = (string) $xml_client->email;
-				$email_id = 0;
-				if(!empty($email)) {
-					if(null != ($address = DAO_Address::lookupAddress($email, true)))
-						$email_id = $address->id; 
-				}
-				
-				// Pull the updated date
-				$updated_str = (string) $xml_client->updated;
-				if(false === ($updated = strtotime($updated_str))) {
-					$updated = time();
-				} else {
-					$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
-					$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
-					$updated = strtotime($date->format('Y-m-d H:i:s'));
-				}
-				
-				$fields = array(
-					DAO_WgmFreshbooksClient::ACCOUNT_NAME => (string) $xml_client->organization,
-					DAO_WgmFreshbooksClient::UPDATED => $updated,
-					DAO_WgmFreshbooksClient::EMAIL_ID => $email_id,
-					DAO_WgmFreshbooksClient::DATA_JSON => json_encode(new SimpleXMLElement($xml_client->asXML(), LIBXML_NOCDATA)),
-				);
-				
-				// Insert/Update
-				if(null == ($client = DAO_WgmFreshbooksClient::get($client_id))) {
-					$fields[DAO_WgmFreshbooksClient::ID] = $client_id;
-					//var_dump($fields);
-					DAO_WgmFreshbooksClient::create($fields);
-					
-				} else {
-					DAO_WgmFreshbooksClient::update($client_id, $fields);
-					//var_dump($fields);
-					
-				}
+				WgmFreshbooksHelper::importOrSyncClientXml($xml_client);
 			}
 			
 			// Next page, if exists
@@ -531,3 +626,46 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 			$this->setParam('clients.updated_from', $timestamp);
 	}
 };
+
+if (class_exists('Extension_OrgTab')):
+class WgmFreshbooksOrgTab extends Extension_OrgTab {
+	function showTab() {
+		@$org_id = DevblocksPlatform::importGPC($_REQUEST['org_id'],'integer',0);
+		
+		$tpl = DevblocksPlatform::getTemplateService();
+		
+		// Check if this org_id is in the Freshbooks client table
+		$clients = $client = DAO_WgmFreshbooksClient::getWhere(sprintf("%s = %d",
+				DAO_WgmFreshbooksClient::ORG_ID,
+				$org_id
+			),
+			null,
+			null,
+			1
+		);
+
+		if(empty($clients)) {
+			if(null != ($org = DAO_ContactOrg::get($org_id)))
+				$tpl->assign('org', $org);
+				
+			$addresses = DAO_Address::getWhere(sprintf("%s = %d",
+					DAO_Address::CONTACT_ORG_ID,
+					$org_id
+				),
+				DAO_Address::NUM_NONSPAM,
+				false
+			);
+			$tpl->assign('addresses', $addresses);
+				
+			$tpl->display('devblocks:wgm.freshbooks::orgs/notfound/tab.tpl');
+			
+		} else {
+			$client = array_shift($clients);
+			$tpl->assign('client', $client);
+			
+			$tpl->display('devblocks:wgm.freshbooks::orgs/exists/tab.tpl');
+		}
+		
+	}
+}
+endif;
