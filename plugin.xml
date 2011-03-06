@@ -46,6 +46,24 @@
 	<!-- Extensions -->
  
 	<extensions>
+		
+		<!-- Event Listeners -->
+		
+		<extension point="devblocks.listener.event">
+			<id>wgm.freshbooks.listener</id>
+			<name>Freshbooks Event Listener</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmFreshbooks_EventListener</name>
+			</class>
+			<params>
+				<param key="events">
+					<value>
+						<data key="org.merge" />						
+					</value>
+				</param>
+			</params>
+		</extension>
 
 		<!-- Controller -->
 		

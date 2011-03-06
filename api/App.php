@@ -187,6 +187,26 @@ class WgmFreshbooksHelper {
 	}
 }
 
+class WgmFreshbooks_EventListener extends DevblocksEventListenerExtension {
+    /**
+     * @param Model_DevblocksEvent $event
+     */
+    function handleEvent(Model_DevblocksEvent $event) {
+        switch($event->id) {
+            case 'org.merge':
+				$this->_orgMerge($event);
+            	break;
+        }
+    }
+    
+    private function _orgMerge($event) {
+    	@$merge_to_id = $event->params['merge_to_id'];
+    	@$merge_from_ids = $event->params['merge_from_ids'];
+    	
+    	DAO_WgmFreshbooksClient::mergeOrgIds($merge_from_ids, $merge_to_id);
+    }
+}
+
 class WgmFreshbooksController extends DevblocksControllerExtension {
 	function isVisible() {
 		// The current session must be a logged-in worker to use this page.

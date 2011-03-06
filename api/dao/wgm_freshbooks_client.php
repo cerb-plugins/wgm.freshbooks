@@ -33,6 +33,21 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 		parent::_updateWhere('wgm_freshbooks_client', $fields, $where);
 	}
 	
+	static function mergeOrgIds($from_ids, $to_id) {
+    	$db = DevblocksPlatform::getDatabaseService();
+    	
+    	if(empty($to_id) || empty($from_ids))
+    		return false;
+    		
+    	if(!is_numeric($to_id) || !is_array($from_ids))
+    		return false;
+    	
+    	$db->Execute(sprintf("UPDATE wgm_freshbooks_client SET org_id = %d WHERE org_id IN (%s)",
+    		$to_id,
+    		implode(',', $from_ids)
+    	));
+	}
+	
 	/**
 	 * @param string $where
 	 * @param mixed $sortBy
