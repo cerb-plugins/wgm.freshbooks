@@ -393,6 +393,7 @@ class WgmFreshbooksController extends DevblocksControllerExtension {
 	}
 };	
 
+if(class_exists('Extension_ConfigTab', true)):
 class WgmFreshbooksConfigTab extends Extension_ConfigTab {
 	function showTab() {
 		$tpl = DevblocksPlatform::getTemplateService();
@@ -413,6 +414,7 @@ class WgmFreshbooksConfigTab extends Extension_ConfigTab {
 		DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_token',$api_token);		
 	}
 };
+endif;
 
 class WgmFreshbooksContactsTab extends Extension_AddressBookTab {
 	function showTab() {
