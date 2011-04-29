@@ -7,7 +7,7 @@ $tables = $db->metaTables();
 // wgm_freshbooks_client
 
 if(!isset($tables['wgm_freshbooks_client'])) {
-	$sql = "
+	$sql = sprintf("
 		CREATE TABLE IF NOT EXISTS wgm_freshbooks_client (
 			id INT UNSIGNED NOT NULL,
 			account_name VARCHAR(255) DEFAULT '',
@@ -21,8 +21,8 @@ if(!isset($tables['wgm_freshbooks_client'])) {
 			INDEX org_id (org_id),
 			INDEX updated (updated),
 			INDEX synchronized (synchronized)
-		) ENGINE=MyISAM;
-	";
+		) ENGINE=%s;
+	", APP_DB_ENGINE);
 	$db->Execute($sql);
 
 	$tables['wgm_freshbooks_client'] = 'wgm_freshbooks_client';
