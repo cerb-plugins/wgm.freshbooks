@@ -1,5 +1,5 @@
-<!DOCTYPE plugin SYSTEM "../../libs/devblocks/plugin.dtd">
-<plugin>
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.devblocks.com/schema/plugin.xsd">
 	<id>wgm.freshbooks</id>
 	<name>[WGM] Freshbooks Integration</name>
 	<description>Integrates with Freshbooks for synchronizing customer contact information, generating estimates, logging paid time against client projects, etc.  Plugin development was sponsored by Nolan Interactive - http://www.nolaninteractive.com/</description>
