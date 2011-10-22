@@ -479,6 +479,47 @@ class WgmFreshbooksContactsTab extends Extension_AddressBookTab {
 		
 		$tpl->display('devblocks:wgm.freshbooks::contacts/tab.tpl');		
 	}
+	
+	function doQuickSearchAction() {
+		@$type = DevblocksPlatform::importGPC($_POST['type'],'string');
+		@$query = DevblocksPlatform::importGPC($_POST['query'],'string');
+	
+		$query = trim($query);
+	
+		$defaults = new C4_AbstractViewModel();
+		$defaults->class_name = 'View_WgmFreshbooksClient';
+		$defaults->id = View_WgmFreshbooksClient::DEFAULT_ID;
+	
+		$view = C4_AbstractViewLoader::getView($defaults->id, $defaults);
+	
+		$params = array();
+		if(!is_numeric($query))
+			if($query && false===strpos($query,'*'))
+				$query = '*' . $query . '*';
+		
+		switch($type) {
+			case "account_name":
+				$params[SearchFields_WgmFreshbooksClient::ACCOUNT_NAME] = new DevblocksSearchCriteria(SearchFields_WgmFreshbooksClient::ACCOUNT_NAME, DevblocksSearchCriteria::OPER_LIKE, strtolower($query));
+			case "email":
+				$params[SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS] = new DevblocksSearchCriteria(SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS, DevblocksSearchCriteria::OPER_LIKE, strtolower($query));
+				break;
+			case "org":
+				$params[SearchFields_WgmFreshbooksClient::ORG_NAME] = new DevblocksSearchCriteria(SearchFields_WgmFreshbooksClient::ORG_NAME, DevblocksSearchCriteria::OPER_LIKE, strtolower($query));
+				break;
+			case "client_id":
+				$params[SearchFields_WgmFreshbooksClient::ID] = new DevblocksSearchCriteria(SearchFields_WgmFreshbooksClient::ID, DevblocksSearchCriteria::OPER_EQ, intval($query));
+				break;
+		}
+	
+		$view->addParams($params, true);
+		$view->renderPage = 0;
+		$view->renderSortBy = null;
+	
+		C4_AbstractViewLoader::setView($defaults->id,$view);
+	
+		DevblocksPlatform::redirect(new DevblocksHttpResponse(array('contacts','freshbooks')));
+	}
+	
 };
 
 class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
