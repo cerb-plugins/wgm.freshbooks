@@ -500,6 +500,7 @@ class WgmFreshbooksContactsTab extends Extension_AddressBookTab {
 		switch($type) {
 			case "account_name":
 				$params[SearchFields_WgmFreshbooksClient::ACCOUNT_NAME] = new DevblocksSearchCriteria(SearchFields_WgmFreshbooksClient::ACCOUNT_NAME, DevblocksSearchCriteria::OPER_LIKE, strtolower($query));
+				break;
 			case "email":
 				$params[SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS] = new DevblocksSearchCriteria(SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS, DevblocksSearchCriteria::OPER_LIKE, strtolower($query));
 				break;
