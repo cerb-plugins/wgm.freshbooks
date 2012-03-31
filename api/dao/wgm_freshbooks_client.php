@@ -333,6 +333,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 			SearchFields_WgmFreshbooksClient::UPDATED,
 			SearchFields_WgmFreshbooksClient::SYNCHRONIZED,
 		);
+		
 		$this->addColumnsHidden(array(
 			SearchFields_WgmFreshbooksClient::DATA_JSON,
 			SearchFields_WgmFreshbooksClient::EMAIL_ID,
@@ -436,26 +437,16 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 			case SearchFields_WgmFreshbooksClient::ACCOUNT_NAME:
 			case SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS:
 			case SearchFields_WgmFreshbooksClient::ORG_NAME:
-				// force wildcards if none used on a LIKE
-				if(($oper == DevblocksSearchCriteria::OPER_LIKE || $oper == DevblocksSearchCriteria::OPER_NOT_LIKE)
-				&& false === (strpos($value,'*'))) {
-					$value = $value.'*';
-				}
-				$criteria = new DevblocksSearchCriteria($field, $oper, $value);
+				$criteria = $this->_doSetCriteriaString($field, $oper, $value);
 				break;
+				
 			case SearchFields_WgmFreshbooksClient::ID:
 				$criteria = new DevblocksSearchCriteria($field,$oper,$value);
 				break;
 				
 			case SearchFields_WgmFreshbooksClient::UPDATED:
 			case SearchFields_WgmFreshbooksClient::SYNCHRONIZED:
-				@$from = DevblocksPlatform::importGPC($_REQUEST['from'],'string','');
-				@$to = DevblocksPlatform::importGPC($_REQUEST['to'],'string','');
-
-				if(empty($from)) $from = 0;
-				if(empty($to)) $to = 'today';
-
-				$criteria = new DevblocksSearchCriteria($field,$oper,array($from,$to));
+				$criteria = $this->_doSetCriteriaDate($field, $oper);
 				break;
 				
 			case 'placeholder_bool':
