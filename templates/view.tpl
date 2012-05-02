@@ -73,7 +73,7 @@
 					{/if}
 				</td>
 			{elseif $column=="a_email"}
-				<td><a href="javascript:;" onclick="genericAjaxPopup('peek','c=contacts&a=showAddressPeek&address_id={$result.w_email_id}&view_id={$view->id}',null,false,'550');">{$result.$column}</a></td>
+				<td><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context={CerberusContexts::CONTEXT_ADDRESS}&context_id={$result.w_email_id}&view_id={$view->id}',null,false,'550');">{$result.$column}</a></td>
 			{elseif $column=="o_name"}
 				<td>
 					{if empty($result.$column)}
@@ -87,7 +87,7 @@
 						<input type="text" name="org_lookup[]" size="32" value="{if !empty($org)}{$org->name}{/if}" class="autocomplete_org input_search">
 						<div class="badge badge-lightgray"><a href="javascript:;" style="text-decoration:none;" onclick="$(this).parent().prev('INPUT.autocomplete_org').val('{$result.w_account_name|replace:"'":"\\'"}');">Add new organization</a></div>
 					{else}
-						<a href="javascript:;" onclick="genericAjaxPopup('peek','c=contacts&a=showOrgPeek&id={$result.w_org_id}&view_id={$view->id}',null,false,'600');">{$result.$column}</a>
+						<a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context={CerberusContexts::CONTEXT_ORG}&context_id={$result.w_org_id}&view_id={$view->id}',null,false,'600');">{$result.$column}</a>
 					{/if}
 				</td>
 			{else}
