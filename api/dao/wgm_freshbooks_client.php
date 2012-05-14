@@ -165,14 +165,6 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 			"LEFT JOIN address ON (wgm_freshbooks_client.email_id = address.id) "
 		;
 		
-		// Custom field joins
-		//list($select_sql, $join_sql, $has_multiple_values) = self::_appendSelectJoinSqlForCustomFieldTables(
-		//	$tables,
-		//	$params,
-		//	'wgm_freshbooks_client.id',
-		//	$select_sql,
-		//	$join_sql
-		//);
 		$has_multiple_values = false; // [TODO] Temporary when custom fields disabled
 				
 		$where_sql = "".
@@ -275,27 +267,18 @@ class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
 		$translate = DevblocksPlatform::getTranslationService();
 		
 		$columns = array(
-			self::ID => new DevblocksSearchField(self::ID, 'wgm_freshbooks_client', 'id', $translate->_('dao.wgm_freshbooks_client.client_id')),
-			self::ACCOUNT_NAME => new DevblocksSearchField(self::ACCOUNT_NAME, 'wgm_freshbooks_client', 'account_name', $translate->_('common.name')),
+			self::ID => new DevblocksSearchField(self::ID, 'wgm_freshbooks_client', 'id', $translate->_('dao.wgm_freshbooks_client.client_id'), Model_CustomField::TYPE_NUMBER),
+			self::ACCOUNT_NAME => new DevblocksSearchField(self::ACCOUNT_NAME, 'wgm_freshbooks_client', 'account_name', $translate->_('common.name'), Model_CustomField::TYPE_SINGLE_LINE),
 			self::EMAIL_ID => new DevblocksSearchField(self::EMAIL_ID, 'wgm_freshbooks_client', 'email_id', $translate->_('common.email')),
 			self::ORG_ID => new DevblocksSearchField(self::ORG_ID, 'wgm_freshbooks_client', 'org_id', $translate->_('contact_org.name')),
-			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'wgm_freshbooks_client', 'updated', $translate->_('common.updated')),
-			self::SYNCHRONIZED => new DevblocksSearchField(self::SYNCHRONIZED, 'wgm_freshbooks_client', 'synchronized', $translate->_('dao.wgm_freshbooks_client.synchronized')),
-			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'wgm_freshbooks_client', 'data_json', $translate->_('dao.wgm_freshbooks_client.data_json')),
+			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'wgm_freshbooks_client', 'updated', $translate->_('common.updated'), Model_CustomField::TYPE_DATE),
+			self::SYNCHRONIZED => new DevblocksSearchField(self::SYNCHRONIZED, 'wgm_freshbooks_client', 'synchronized', $translate->_('dao.wgm_freshbooks_client.synchronized'), Model_CustomField::TYPE_DATE),
+			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'wgm_freshbooks_client', 'data_json', $translate->_('dao.wgm_freshbooks_client.data_json'), null),
 			
-			self::EMAIL_ADDRESS => new DevblocksSearchField(self::EMAIL_ADDRESS, 'address', 'email', $translate->_('common.email')),
+			self::EMAIL_ADDRESS => new DevblocksSearchField(self::EMAIL_ADDRESS, 'address', 'email', $translate->_('common.email'), Model_CustomField::TYPE_SINGLE_LINE),
 			self::EMAIL_ORG_ID => new DevblocksSearchField(self::EMAIL_ORG_ID, 'address', 'contact_org_id'),
-			self::ORG_NAME => new DevblocksSearchField(self::ORG_NAME, 'contact_org', 'name', $translate->_('contact_org.name')),
+			self::ORG_NAME => new DevblocksSearchField(self::ORG_NAME, 'contact_org', 'name', $translate->_('contact_org.name'), Model_CustomField::TYPE_SINGLE_LINE),
 		);
-		
-		// Custom Fields
-		//$fields = DAO_CustomField::getByContext(CerberusContexts::XXX);
-
-		//if(is_array($fields))
-		//foreach($fields as $field_id => $field) {
-		//	$key = 'cf_'.$field_id;
-		//	$columns[$key] = new DevblocksSearchField($key,$key,'field_value',$field->name,$field->type);
-		//}
 		
 		// Sort by label (translation-conscious)
 		DevblocksPlatform::sortObjects($columns, 'db_label');
@@ -375,10 +358,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 		$tpl->assign('id', $this->id);
 		$tpl->assign('view', $this);
 
-		// Custom fields
-		//$custom_fields = DAO_CustomField::getByContext(CerberusContexts::XXX);
-		//$tpl->assign('custom_fields', $custom_fields);
-
 		$tpl->display('devblocks:wgm.freshbooks::view.tpl');
 	}
 
@@ -402,16 +381,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 			case SearchFields_WgmFreshbooksClient::SYNCHRONIZED:
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__date.tpl');
 				break;
-			/*
-			default:
-				// Custom Fields
-				if('cf_' == substr($field,0,3)) {
-					$this->_renderCriteriaCustomField($tpl, substr($field,3));
-				} else {
-					echo ' ';
-				}
-				break;
-			*/
 		}
 	}
 
@@ -453,15 +422,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 				@$bool = DevblocksPlatform::importGPC($_REQUEST['bool'],'integer',1);
 				$criteria = new DevblocksSearchCriteria($field,$oper,$bool);
 				break;
-				
-			/*
-			default:
-				// Custom Fields
-				if(substr($field,0,3)=='cf_') {
-					$criteria = $this->_doSetCriteriaCustomField($field, substr($field,3));
-				}
-				break;
-			*/
 		}
 
 		if(!empty($criteria)) {
@@ -491,14 +451,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 				case 'example':
 					//$change_fields[DAO_WgmFreshbooksClient::EXAMPLE] = 'some value';
 					break;
-				/*
-				default:
-					// Custom fields
-					if(substr($k,0,3)=="cf_") {
-						$custom_fields[substr($k,3)] = $v;
-					}
-					break;
-				*/
 			}
 		}
 
@@ -525,9 +477,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 			
 			DAO_WgmFreshbooksClient::update($batch_ids, $change_fields);
 
-			// Custom Fields
-			//self::_doBulkSetCustomFields(ChCustomFieldSource_WgmFreshbooksClient::ID, $custom_fields, $batch_ids);
-			
 			unset($batch_ids);
 		}
 
@@ -535,3 +484,178 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 	}			
 };
 
+class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements IDevblocksContextProfile { //, IDevblocksContextPeek, IDevblocksContextImport
+    function getRandom() {
+    	//return DAO_WgmFreshbooksClient::random();
+    }
+    
+    function profileGetUrl($context_id) {
+    	if(empty($context_id))
+    		return '';
+    
+    	$url_writer = DevblocksPlatform::getUrlService();
+    	$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_client&id='.$context_id, true);
+    	return $url;
+    }
+    
+	function getMeta($context_id) {
+		$client = DAO_WgmFreshbooksClient::get($context_id);
+		
+		$url = $this->profileGetUrl($context_id);
+		$friendly = DevblocksPlatform::strToPermalink($client->account_name);
+
+		if(!empty($friendly))
+			$url .= '-' . $friendly;
+		
+		return array(
+			'id' => $client->id,
+			'name' => $client->account_name,
+			'permalink' => $url,
+		);
+	}
+    
+	function getContext($object, &$token_labels, &$token_values, $prefix=null) {
+		if(is_null($prefix))
+			$prefix = 'Freshbooks Client:';
+		
+		$translate = DevblocksPlatform::getTranslationService();
+		
+		// Polymorph
+		if(is_numeric($object)) {
+			$object = DAO_WgmFreshbooksClient::get($object);
+		} elseif($object instanceof Model_WgmFreshbooksClient) {
+			// It's what we want already.
+		} else {
+			$object = null;
+		}
+		
+		// Token labels
+		$token_labels = array(
+// 			'address' => $prefix.$translate->_('address.address'),
+// 			'record_url' => $prefix.$translate->_('common.url.record'),
+		);
+		
+		// Token values
+		$token_values = array();
+		
+		$token_values['_context'] = 'wgm.freshbooks.contexts.client';
+
+		// Address token values
+		if(null != $object) {
+			$token_values['_loaded'] = true;
+			$token_values['_label'] = $object->account_name;
+			$token_values['id'] = $object->id;
+
+			// URL
+// 			$url_writer = DevblocksPlatform::getUrlService();
+// 			$token_values['record_url'] = $url_writer->writeNoProxy(sprintf("c=profiles&type=address&id=%d-%s",$address->id, DevblocksPlatform::strToPermalink($address->email)), true);
+			
+			// Org
+// 			$org_id = (null != $address && !empty($address->contact_org_id)) ? $address->contact_org_id : null;
+// 			$token_values['org_id'] = $org_id;
+		}
+		
+		// Email Org
+// 		$merge_token_labels = array();
+// 		$merge_token_values = array();
+// 		CerberusContexts::getContext(CerberusContexts::CONTEXT_ORG, null, $merge_token_labels, $merge_token_values, null, true);
+
+// 		CerberusContexts::merge(
+// 			'org_',
+// 			'',
+// 			$merge_token_labels,
+// 			$merge_token_values,
+// 			$token_labels,
+// 			$token_values
+// 		);		
+		
+		return true;		
+	}
+	
+	function lazyLoadContextValues($token, $dictionary) {
+		if(!isset($dictionary['id']))
+			return;
+		
+		$context = 'wgm.freshbooks.contexts.client';
+		$context_id = $dictionary['id'];
+		
+		@$is_loaded = $dictionary['_loaded'];
+		$values = array();
+		
+		if(!$is_loaded) {
+			$labels = array();
+			CerberusContexts::getContext($context, $context_id, $labels, $values);
+		}
+		
+		switch($token) {
+			case 'watchers':
+				$watchers = array(
+					$token => CerberusContexts::getWatchers($context, $context_id, true),
+				);
+				$values = array_merge($values, $watchers);
+				break;
+				
+			default:
+				break;
+		}
+		
+		return $values;
+	}
+
+	function getChooserView($view_id=null) {
+		if(empty($view_id))
+			$view_id = 'chooser_'.str_replace('.','_',$this->id).time().mt_rand(0,9999);
+		
+		// View
+		$defaults = new C4_AbstractViewModel();
+		$defaults->id = $view_id;
+		$defaults->is_ephemeral = true;
+		$defaults->class_name = $this->getViewClass();
+		
+		$view = C4_AbstractViewLoader::getView($view_id, $defaults);
+		$view->name = 'Freshbooks Clients';
+		
+// 		$view->view_columns = array(
+// 			SearchFields_WgmFreshbooksClient::ACCOUNT_NAME,
+// 		);
+		
+		$view->addParamsDefault(array(
+		), true);
+		
+		$view->addParams($view->getParamsDefault(), true);
+		
+		$view->renderSortBy = SearchFields_WgmFreshbooksClient::UPDATED;
+		$view->renderSortAsc = true;
+		$view->renderLimit = 10;
+		$view->renderFilters = false;
+		$view->renderTemplate = 'contextlinks_chooser';
+		
+		C4_AbstractViewLoader::setView($view_id, $view);
+		return $view;		
+	}
+	
+	function getView($context=null, $context_id=null, $options=array()) {
+		$view_id = str_replace('.','_',$this->id);
+		
+		$defaults = new C4_AbstractViewModel();
+		$defaults->id = $view_id; 
+		$defaults->class_name = $this->getViewClass();
+		$view = C4_AbstractViewLoader::getView($view_id, $defaults);
+		$view->name = 'Freshbooks Clients';
+		
+		$params_req = array();
+		
+		if(!empty($context) && !empty($context_id)) {
+			$params_req = array(
+				new DevblocksSearchCriteria(SearchFields_WgmFreshbooksClient::CONTEXT_LINK,'=',$context),
+				new DevblocksSearchCriteria(SearchFields_WgmFreshbooksClient::CONTEXT_LINK_ID,'=',$context_id),
+			);
+		}
+		
+		$view->addParamsRequired($params_req, true);
+		
+		$view->renderTemplate = 'context';
+		C4_AbstractViewLoader::setView($view_id, $view);
+		return $view;
+	}
+};

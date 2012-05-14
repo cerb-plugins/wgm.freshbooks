@@ -11,7 +11,7 @@
 	<!-- Requirements -->
 
 	<requires>
-		<app_version min="5.6" max="5.8.99" />
+		<app_version min="6.0" max="6.0.99" />
 		<php_extension name="curl" />
 	</requires>
  
@@ -35,6 +35,7 @@
 			<class name="WgmFreshbooksHelper" />
 		</file>
 		<file path="api/dao/wgm_freshbooks_client.php">
+			<class name="Context_WgmFreshbooksClient" />
 			<class name="DAO_WgmFreshbooksClient" />
 			<class name="Model_WgmFreshbooksClient" />
 			<class name="SearchFields_WgmFreshbooksClient" />
@@ -53,6 +54,30 @@
 	<!-- Extensions -->
  
 	<extensions>
+		
+		<!-- Contexts -->
+		
+		<extension point="devblocks.context">
+			<id>wgm.freshbooks.contexts.client</id>
+			<name>Freshbooks Client</name>
+			<class>
+				<file>api/dao/wgm_freshbooks_client.php</file>
+				<name>Context_WgmFreshbooksClient</name>
+			</class>
+			<params>
+				<param key="alias" value="freshbooks_client" />
+				<param key="view_class" value="View_WgmFreshbooksClient" />
+				<param key="options">
+					<value>
+						<!--<data key="create" />-->
+						<data key="find" />
+						<!--<data key="snippets" />-->
+						<data key="va_variable" />
+						<data key="workspace" />
+					</value>
+				</param>
+			</params>
+		</extension>
 		
 		<!-- Event Listeners -->
 		
@@ -130,25 +155,25 @@
 				<param key="menu_id" value="core.setup.menu.plugins" />
 			</params>
 		</extension>		
+
+		<!-- Profile Page Sections -->
 		
-		<!-- Address Book Tabs -->
-		
-		<extension point="cerberusweb.contacts.tab">
-			<id>wgm.freshbooks.contacts_tab</id>
-			<name>Freshbooks Contacts Tab</name>
+		<extension point="cerberusweb.ui.page.section">
+			<id>wgm.freshbooks.profiles.freshbooks_client</id>
+			<name>Freshbooks Client Section</name>
 			<class>
-				<file>api/App.php</file>
-				<name>WgmFreshbooksContactsTab</name>
+				<file>api/profiles/freshbooks_client.php</file>
+				<name>PageSection_ProfilesFreshbooksClient</name>
 			</class>
 			<params>
-				<param key="uri" value="freshbooks" />
-    			<param key="title" value="wgm.freshbooks.common" />
+				<param key="page_id" value="core.page.profiles" />
+				<param key="uri" value="freshbooks_client" />
 			</params>
 		</extension>
 		
 		<!-- Org Tabs -->
 		
-		<extension point="cerberusweb.org.tab">
+		<extension point="cerberusweb.ui.context.profile.tab">
 			<id>wgm.freshbooks.org_tab</id>
 			<name>Freshbooks Org Tab</name>
 			<class>
@@ -157,6 +182,11 @@
 			</class>
 			<params>
 				<param key="uri" value="freshbooks" />
+				<param key="contexts">
+					<value>
+						<data key="cerberusweb.contexts.org" />
+					</value>
+				</param>
     			<param key="title" value="wgm.freshbooks.common" />
 			</params>
 		</extension>

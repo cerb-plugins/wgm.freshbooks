@@ -29,7 +29,7 @@
 	<div class="status"></div>
 	
 	<button type="button" class="submit"><span class="cerb-sprite2 sprite-tick-circle-frame"></span> {'common.save_changes'|devblocks_translate|capitalize}</button>
-	<button type="button" class="tester"><span class="cerb-sprite sprite-gear"></span> Test</button>
+	<button type="button" class="tester"><span class="cerb-sprite2 sprite-gear"></span> Test</button>
 </fieldset>
 
 </form>
