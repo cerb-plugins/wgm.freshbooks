@@ -20,7 +20,7 @@
 <form id="customize{$view->id}" name="customize{$view->id}" action="#" onsubmit="return false;" style="display:none;"></form>
 <form id="viewForm{$view->id}" name="viewForm{$view->id}" action="{devblocks_url}{/devblocks_url}" method="post">
 <input type="hidden" name="view_id" value="{$view->id}">
-{*<input type="hidden" name="context_id" value="{Context_ExampleObject::ID}">*}
+<input type="hidden" name="context_id" value="wgm.freshbooks.contexts.client">
 <input type="hidden" name="c" value="wgm.freshbooks">
 <input type="hidden" name="a" value="">
 <input type="hidden" name="explore_from" value="0">
@@ -100,48 +100,43 @@
 	{/foreach}
 </table>
 
-<table cellpadding="2" cellspacing="0" border="0" width="100%" id="{$view->id}_actions">
-	{if $total}
-	<tr>
-		<td colspan="2" valign="top">
-			<button id="btnLinkOrgs{$view->id}" type="button" style="display:none;"><span class="cerb-sprite2 sprite-tick-circle"></span> Update Organizations</button>
-			{*
-			<button id="btnExplore{$view->id}" type="button" onclick="this.form.explore_from.value=$(this).closest('form').find('tbody input:checkbox:checked:first').val();this.form.a.value='viewExplore';this.form.submit();"><span class="cerb-sprite sprite-media_play_green"></span> {'common.explore'|devblocks_translate|lower}</button>
-			{if 1||$active_worker->hasPriv('example.actions.update_all')}<button type="button" onclick="genericAjaxPopup('peek','c=example.objects&a=showBulkUpdatePopup&view_id={$view->id}&ids=' + Devblocks.getFormEnabledCheckboxValues('viewForm{$view->id}','row_id[]'),null,false,'500');"><span class="cerb-sprite2 sprite-folder-gear"></span> {'common.bulk_update'|devblocks_translate|lower}</button>{/if}
-			*}
-		</td>
-	</tr>
-	{/if}
-	<tr>
-		<td align="right" valign="top" nowrap="nowrap">
-			{math assign=fromRow equation="(x*y)+1" x=$view->renderPage y=$view->renderLimit}
-			{math assign=toRow equation="(x-1)+y" x=$fromRow y=$view->renderLimit}
-			{math assign=nextPage equation="x+1" x=$view->renderPage}
-			{math assign=prevPage equation="x-1" x=$view->renderPage}
-			{math assign=lastPage equation="ceil(x/y)-1" x=$total y=$view->renderLimit}
-			
-			{* Sanity checks *}
-			{if $toRow > $total}{assign var=toRow value=$total}{/if}
-			{if $fromRow > $toRow}{assign var=fromRow value=$toRow}{/if}
-			
-			{if $view->renderPage > 0}
-				<a href="javascript:;" onclick="genericAjaxGet('view{$view->id}','c=internal&a=viewPage&id={$view->id}&page=0');">&lt;&lt;</a>
-				<a href="javascript:;" onclick="genericAjaxGet('view{$view->id}','c=internal&a=viewPage&id={$view->id}&page={$prevPage}');">&lt;{$translate->_('common.previous_short')|capitalize}</a>
-			{/if}
-			({'views.showing_from_to'|devblocks_translate:$fromRow:$toRow:$total})
-			{if $toRow < $total}
-				<a href="javascript:;" onclick="genericAjaxGet('view{$view->id}','c=internal&a=viewPage&id={$view->id}&page={$nextPage}');">{$translate->_('common.next')|capitalize}&gt;</a>
-				<a href="javascript:;" onclick="genericAjaxGet('view{$view->id}','c=internal&a=viewPage&id={$view->id}&page={$lastPage}');">&gt;&gt;</a>
-			{/if}
-		</td>
-	</tr>
-</table>
+{if $total}
+<div style="padding-top:5px;">
+	<div style="float:right;">
+		{math assign=fromRow equation="(x*y)+1" x=$view->renderPage y=$view->renderLimit}
+		{math assign=toRow equation="(x-1)+y" x=$fromRow y=$view->renderLimit}
+		{math assign=nextPage equation="x+1" x=$view->renderPage}
+		{math assign=prevPage equation="x-1" x=$view->renderPage}
+		{math assign=lastPage equation="ceil(x/y)-1" x=$total y=$view->renderLimit}
+		
+		{* Sanity checks *}
+		{if $toRow > $total}{assign var=toRow value=$total}{/if}
+		{if $fromRow > $toRow}{assign var=fromRow value=$toRow}{/if}
+		
+		{if $view->renderPage > 0}
+			<a href="javascript:;" onclick="genericAjaxGet('view{$view->id}','c=internal&a=viewPage&id={$view->id}&page=0');">&lt;&lt;</a>
+			<a href="javascript:;" onclick="genericAjaxGet('view{$view->id}','c=internal&a=viewPage&id={$view->id}&page={$prevPage}');">&lt;{$translate->_('common.previous_short')|capitalize}</a>
+		{/if}
+		({'views.showing_from_to'|devblocks_translate:$fromRow:$toRow:$total})
+		{if $toRow < $total}
+			<a href="javascript:;" onclick="genericAjaxGet('view{$view->id}','c=internal&a=viewPage&id={$view->id}&page={$nextPage}');">{$translate->_('common.next')|capitalize}&gt;</a>
+			<a href="javascript:;" onclick="genericAjaxGet('view{$view->id}','c=internal&a=viewPage&id={$view->id}&page={$lastPage}');">&gt;&gt;</a>
+		{/if}
+	</div>
+	
+	<div style="float:left;" id="{$view->id}_actions">
+		<button type="button" class="action-always-show action-linkorgs" style="display:none;"><span class="cerb-sprite2 sprite-tick-circle"></span> Update Organizations</button>
+	</div>
+</div>
+
+<div style="clear:both;"></div>
+{/if}
 </form>
 
 <script type="text/javascript">
 	if($('#view{$view->id} INPUT.autocomplete_org').length > 0) {
 		ajax.orgAutoComplete('#view{$view->id} INPUT.autocomplete_org');
-		$('#btnLinkOrgs{$view->id}')
+		$('#{$view->id}_actions BUTTON.action-linkorgs')
 			.click(function() {
 				genericAjaxPost('viewForm{$view->id}','','c=wgm.freshbooks&a=viewSetOrgs',function() {
 					genericAjaxGet('view{$view->id}','c=internal&a=viewRefresh&id={$view->id}');
@@ -153,3 +148,26 @@
 </script>
 
 {include file="devblocks:cerberusweb.core::internal/views/view_common_jquery_ui.tpl"}
+
+<script type="text/javascript">
+$frm = $('#viewForm{$view->id}');
+
+{if $pref_keyboard_shortcuts}
+$frm.bind('keyboard_shortcut',function(event) {
+	//console.log("{$view->id} received " + (indirect ? 'indirect' : 'direct') + " keyboard event for: " + event.keypress_event.which);
+	
+	$view_actions = $('#{$view->id}_actions');
+	
+	hotkey_activated = true;
+
+	switch(event.keypress_event.which) {
+		default:
+			hotkey_activated = false;
+			break;
+	}
+
+	if(hotkey_activated)
+		event.preventDefault();
+});
+{/if}
+</script>
