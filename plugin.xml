@@ -2,16 +2,16 @@
 <plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.devblocks.com/schema/plugin.xsd">
 	<id>wgm.freshbooks</id>
 	<name>Freshbooks Integration</name>
-	<description>Integrates with Freshbooks for synchronizing customer contact information, generating estimates, logging paid time against client projects, etc.  Plugin development was sponsored by Nolan Interactive - http://www.nolaninteractive.com/</description>
+	<description>This plugin provides integration with Freshbooks via their REST API. This plugin is intended to be a bridge used by other plugins to communicate with Freshbooks services. It adds records for Freshbooks Clients.  Plugin development has been sponsored by Nolan Interactive - http://www.nolaninteractive.com/</description>
 	<author>WebGroup Media, LLC.</author>
-	<version>1.0.3</version>
+	<version>1.0.4</version>
 	<link>https://github.com/cerb5-plugins/wgm.freshbooks</link>
 	<image>plugin.png</image>
  
 	<!-- Requirements -->
 
 	<requires>
-		<app_version min="6.0" max="6.0.99" />
+		<app_version min="6.0.2" max="6.0.99" />
 		<php_extension name="curl" />
 	</requires>
  
