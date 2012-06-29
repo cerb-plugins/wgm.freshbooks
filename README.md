@@ -1,4 +1,4 @@
-Cerb5 Plugins - wgm.freshbooks
+Cerb Plugins - wgm.freshbooks
 ===========================================
 Copyright (C) 2012 WebGroup Media, LLC.  
 [http://www.cerberusweb.com/](http://www.cerberusweb.com/)  
@@ -16,8 +16,8 @@ This plugin integrates [Freshbooks](https://webgroupmedia.freshbooks.com/refer/w
 
 Installation
 ------------
-* Change directory to **/cerb5/storage/plugins/**
-* `git clone git://github.com/cerb5-plugins/wgm.freshbooks.git`
+* Change directory to **/cerb6/storage/plugins/**
+* `git clone git://github.com/cerb-plugins/wgm.freshbooks.git`
 * In your helpdesk, enable the plugin from **Setup->Features & Plugins**.
 
 Credits
