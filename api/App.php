@@ -721,7 +721,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		// [TODO] Enable keys
 	
 		// Save the synchronize date as right now in GMT
-// 		$this->setParam('invoices.updated_from', time());
+ 		$this->setParam('invoices.updated_from', time());
 	}
 	
 	public function configure($instance) {
