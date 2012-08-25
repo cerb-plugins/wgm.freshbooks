@@ -18,7 +18,7 @@ if(!isset($tables['freshbooks_invoice'])) {
 			updated INT UNSIGNED NOT NULL DEFAULT 0,
 			data_json TEXT,
 			PRIMARY KEY (id),
-			INDEX updated_date (updated_date)
+			INDEX updated (updated)
 		) ENGINE=%s;
 	", APP_DB_ENGINE);
 	$db->Execute($sql);
