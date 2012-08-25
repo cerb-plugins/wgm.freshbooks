@@ -417,10 +417,10 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				
 			switch($field_key) {
 				// Fields
-				//				case SearchFields_FreshbooksInvoice::EXAMPLE:
-				//					$pass = true;
-				//					break;
-					
+				case SearchFields_FreshbooksInvoice::STATUS:
+					$pass = true;
+					break;
+				
 				// Virtuals
 				//				case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
 				//				case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
@@ -449,6 +449,11 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			return array();
 
 		switch($column) {
+			case SearchFields_FreshbooksInvoice::STATUS:
+				$label_map = DAO_FreshbooksInvoice::getStatuses();
+				$counts = $this->_getSubtotalCountForStringColumn('DAO_FreshbooksInvoice', $column, $label_map, 'in', 'options[]');
+				break;
+			
 			//			case SearchFields_FreshbooksInvoice::EXAMPLE_BOOL:
 			//				$counts = $this->_getSubtotalCountForBooleanColumn('DAO_FreshbooksInvoice', $column);
 			//				break;
@@ -491,9 +496,8 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		//$custom_fields = DAO_CustomField::getByContext(CerberusContexts::XXX);
 		//$tpl->assign('custom_fields', $custom_fields);
 
-		$tpl->display('devblocks:wgm.freshbooks::invoices.tpl');
-// 		$tpl->assign('view_template', 'devblocks:wgm.freshbooks:invoices.tpl');
-// 		$tpl->display('devblocks:cerberusweb.core::internal/views/subtotals_and_view.tpl');
+ 		$tpl->assign('view_template', 'devblocks:wgm.freshbooks::invoices.tpl');
+ 		$tpl->display('devblocks:cerberusweb.core::internal/views/subtotals_and_view.tpl');
 	}
 
 	function renderCriteria($field) {
