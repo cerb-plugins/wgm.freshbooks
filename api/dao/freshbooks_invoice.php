@@ -294,13 +294,13 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 		$translate = DevblocksPlatform::getTranslationService();
 
 		$columns = array(
-			self::ID => new DevblocksSearchField(self::ID, 'freshbooks_invoice', 'id', $translate->_('dao.freshbooks_invoice.id')),
+			self::ID => new DevblocksSearchField(self::ID, 'freshbooks_invoice', 'id', $translate->_('common.id')),
 			self::CLIENT_ID => new DevblocksSearchField(self::CLIENT_ID, 'freshbooks_invoice', 'client_id', $translate->_('dao.freshbooks_invoice.client_id')),
 			self::NUMBER => new DevblocksSearchField(self::NUMBER, 'freshbooks_invoice', 'number', $translate->_('dao.freshbooks_invoice.number')),
 			self::AMOUNT => new DevblocksSearchField(self::AMOUNT, 'freshbooks_invoice', 'amount', $translate->_('dao.freshbooks_invoice.amount')),
-			self::STATUS => new DevblocksSearchField(self::STATUS, 'freshbooks_invoice', 'status', $translate->_('dao.freshbooks_invoice.status')),
-			self::CREATED => new DevblocksSearchField(self::CREATED, 'freshbooks_invoice', 'created', $translate->_('dao.freshbooks_invoice.created')),
-			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'freshbooks_invoice', 'updated', $translate->_('dao.freshbooks_invoice.updated')),
+			self::STATUS => new DevblocksSearchField(self::STATUS, 'freshbooks_invoice', 'status', $translate->_('common.status')),
+			self::CREATED => new DevblocksSearchField(self::CREATED, 'freshbooks_invoice', 'created', $translate->_('common.created')),
+			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'freshbooks_invoice', 'updated', $translate->_('common.updated')),
 			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'freshbooks_invoice', 'data_json', $translate->_('dao.freshbooks_invoice.data_json')),
 		);
 
