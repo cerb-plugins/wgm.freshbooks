@@ -1,6 +1,4 @@
 <?php
-
-
 class DAO_FreshbooksInvoice extends C4_ORMHelper {
 	const ID = 'id';
 	const CLIENT_ID = 'client_id';
@@ -332,34 +330,31 @@ class Model_FreshbooksInvoice {
 };
 
 class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Subtotals {
-	const DEFAULT_ID = 'freshbooksinvoice';
+	const DEFAULT_ID = 'freshbooks_invoice';
 
 	function __construct() {
 		$translate = DevblocksPlatform::getTranslationService();
 
 		$this->id = self::DEFAULT_ID;
-		// [TODO] Name the worklist view
-		$this->name = $translate->_('FreshbooksInvoice');
+		$this->name = $translate->_('Freshbooks Invoices');
 		$this->renderLimit = 25;
 		$this->renderSortBy = SearchFields_FreshbooksInvoice::ID;
 		$this->renderSortAsc = true;
 
 		$this->view_columns = array(
-				SearchFields_FreshbooksInvoice::ID,
-				SearchFields_FreshbooksInvoice::CLIENT_ID,
-				SearchFields_FreshbooksInvoice::NUMBER,
-				SearchFields_FreshbooksInvoice::AMOUNT,
-				SearchFields_FreshbooksInvoice::STATUS,
-				SearchFields_FreshbooksInvoice::CREATED,
-				SearchFields_FreshbooksInvoice::UPDATED,
+			SearchFields_FreshbooksInvoice::CLIENT_ID,
+			SearchFields_FreshbooksInvoice::AMOUNT,
+			SearchFields_FreshbooksInvoice::STATUS,
+			SearchFields_FreshbooksInvoice::UPDATED,
 		);
-		// [TODO] Filter fields
+		
 		$this->addColumnsHidden(array(
+			SearchFields_FreshbooksInvoice::ID,
 			SearchFields_FreshbooksInvoice::DATA_JSON,
 		));
 
-		// [TODO] Filter fields
 		$this->addParamsHidden(array(
+			SearchFields_FreshbooksInvoice::ID,
 			SearchFields_WgmFreshbooksClient::DATA_JSON,
 		));
 
@@ -469,7 +464,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		//$custom_fields = DAO_CustomField::getByContext(CerberusContexts::XXX);
 		//$tpl->assign('custom_fields', $custom_fields);
 
-		// [TODO] Set your template path
 		$tpl->display('devblocks:wgm.freshbooks::invoices.tpl');
 // 		$tpl->assign('view_template', 'devblocks:wgm.freshbooks:invoices.tpl');
 // 		$tpl->display('devblocks:cerberusweb.core::internal/views/subtotals_and_view.tpl');
@@ -479,7 +473,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		$tpl = DevblocksPlatform::getTemplateService();
 		$tpl->assign('id', $this->id);
 
-		// [TODO] Move the fields into the proper data type
 		switch($field) {
 			case SearchFields_FreshbooksInvoice::ID:
 
@@ -487,13 +480,11 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			case SearchFields_FreshbooksInvoice::STATUS:
 
 			case SearchFields_FreshbooksInvoice::DATA_JSON:
-			case 'placeholder_string':
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__string.tpl');
 				break;
 
 			case SearchFields_FreshbooksInvoice::CLIENT_ID:
 			case SearchFields_FreshbooksInvoice::NUMBER:
-			case 'placeholder_number':
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__number.tpl');
 				break;
 
@@ -503,7 +494,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				
 			case SearchFields_FreshbooksInvoice::CREATED:
 			case SearchFields_FreshbooksInvoice::UPDATED:
-			case 'placeholder_date':
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__date.tpl');
 				break;
 
@@ -547,7 +537,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	function doSetCriteria($field, $oper, $value) {
 		$criteria = null;
 
-		// [TODO] Move fields into the right data type
 		switch($field) {
 			case SearchFields_FreshbooksInvoice::ID:
 
@@ -555,19 +544,16 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			case SearchFields_FreshbooksInvoice::STATUS:
 
 			case SearchFields_FreshbooksInvoice::DATA_JSON:
-			case 'placeholder_string':
 				$criteria = $this->_doSetCriteriaString($field, $oper, $value);
 				break;
 			
 			case SearchFields_FreshbooksInvoice::CLIENT_ID:
 			case SearchFields_FreshbooksInvoice::NUMBER:
-			case 'placeholder_number':
 				$criteria = new DevblocksSearchCriteria($field,$oper,$value);
 				break;
 
 			case SearchFields_FreshbooksInvoice::CREATED:
 			case SearchFields_FreshbooksInvoice::UPDATED:
-			case 'placeholder_date':
 				$criteria = $this->_doSetCriteriaDate($field, $oper);
 				break;
 
@@ -789,10 +775,6 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 
 		$view = C4_AbstractViewLoader::getView($view_id, $defaults);
 		$view->name = 'Freshbooks Invoices';
-
-		// 		$view->view_columns = array(
-		// 			SearchFields_WgmFreshbooksClient::ACCOUNT_NAME,
-		// 		);
 
 		$view->addParamsDefault(array(
 		), true);

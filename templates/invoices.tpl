@@ -63,7 +63,7 @@
 		<tr class="{$tableRowClass}">
 			<td colspan="{$smarty.foreach.headers.total}">
 				<input type="checkbox" name="row_id[]" value="{$result.f_id}" style="display:none;">
-				<b class="subject">{$result.w_account_name}</b>
+				<b class="subject">#{$result.f_number|number_format:0:'':''}</b>
 				{*<a href="{devblocks_url}c=example.objects&p=profile&id={$result.w_id}{/devblocks_url}" class="subject">{$result.w_name}</a>*} 
 				{*<a href="javascript:;" onclick="genericAjaxPopup('peek','c=example.objects&a=showEntryPopup&id={$result.w_id}&view_id={$view->id}',null,false,'500');"><span class="ui-icon ui-icon-newwin" style="display:inline-block;vertical-align:middle;" title="{$translate->_('views.peek')}"></span></a>*}
 			</td>
@@ -81,6 +81,8 @@
 				</td>
 			{elseif $column=="f_amount"}
 				<td>{$result.$column|number_format:2}</td>
+			{elseif $column=="f_number"}
+				<td>{$result.$column|number_format:0:'':''}</td>
 			{elseif $column=="f_client_id"}
 				<td><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context=wgm.freshbooks.contexts.clients&context_id={$result.f_client_id}&view_id={$view->id}',null,false,'550');">{$result.$column}</a></td>
 			{else}
