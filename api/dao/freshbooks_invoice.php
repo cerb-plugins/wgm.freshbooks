@@ -300,16 +300,16 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 		$translate = DevblocksPlatform::getTranslationService();
 
 		$columns = array(
-			self::ID => new DevblocksSearchField(self::ID, 'freshbooks_invoice', 'id', $translate->_('common.id')),
-			self::CLIENT_ID => new DevblocksSearchField(self::CLIENT_ID, 'freshbooks_invoice', 'client_id', $translate->_('dao.freshbooks_invoice.client_id')),
-			self::NUMBER => new DevblocksSearchField(self::NUMBER, 'freshbooks_invoice', 'number', $translate->_('dao.freshbooks_invoice.number')),
-			self::AMOUNT => new DevblocksSearchField(self::AMOUNT, 'freshbooks_invoice', 'amount', $translate->_('dao.freshbooks_invoice.amount')),
-			self::STATUS => new DevblocksSearchField(self::STATUS, 'freshbooks_invoice', 'status', $translate->_('common.status')),
-			self::CREATED => new DevblocksSearchField(self::CREATED, 'freshbooks_invoice', 'created', $translate->_('common.created')),
-			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'freshbooks_invoice', 'updated', $translate->_('common.updated')),
-			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'freshbooks_invoice', 'data_json', $translate->_('dao.freshbooks_invoice.data_json')),
+			self::ID => new DevblocksSearchField(self::ID, 'freshbooks_invoice', 'id', $translate->_('common.id'), null),
+			self::CLIENT_ID => new DevblocksSearchField(self::CLIENT_ID, 'freshbooks_invoice', 'client_id', $translate->_('dao.freshbooks_invoice.client_id'), Model_CustomField::TYPE_NUMBER),
+			self::NUMBER => new DevblocksSearchField(self::NUMBER, 'freshbooks_invoice', 'number', $translate->_('dao.freshbooks_invoice.number'), Model_CustomField::TYPE_NUMBER),
+			self::AMOUNT => new DevblocksSearchField(self::AMOUNT, 'freshbooks_invoice', 'amount', $translate->_('dao.freshbooks_invoice.amount'), Model_CustomField::TYPE_NUMBER),
+			self::STATUS => new DevblocksSearchField(self::STATUS, 'freshbooks_invoice', 'status', $translate->_('common.status'), Model_CustomField::TYPE_SINGLE_LINE),
+			self::CREATED => new DevblocksSearchField(self::CREATED, 'freshbooks_invoice', 'created', $translate->_('common.created'), Model_CustomField::TYPE_DATE),
+			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'freshbooks_invoice', 'updated', $translate->_('common.updated'), Model_CustomField::TYPE_DATE),
+			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'freshbooks_invoice', 'data_json', $translate->_('dao.freshbooks_invoice.data_json'), null),
 				
-			self::CLIENT_ACCOUNT_NAME => new DevblocksSearchField(self::CLIENT_ACCOUNT_NAME, 'wgm_freshbooks_client', 'account_name', $translate->_('dao.wgm_freshbooks_client.account_name')),
+			self::CLIENT_ACCOUNT_NAME => new DevblocksSearchField(self::CLIENT_ACCOUNT_NAME, 'wgm_freshbooks_client', 'account_name', $translate->_('dao.wgm_freshbooks_client.account_name'), Model_CustomField::TYPE_SINGLE_LINE),
 		);
 
 		// Custom Fields
