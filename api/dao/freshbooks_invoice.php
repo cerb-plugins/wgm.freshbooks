@@ -7,8 +7,8 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 	const NUMBER = 'number';
 	const AMOUNT = 'amount';
 	const STATUS = 'status';
-	const CREATED = 'created_date';
-	const UPDATED = 'updated_date';
+	const CREATED = 'created';
+	const UPDATED = 'updated';
 	const DATA_JSON = 'data_json';
 
 	static function create($fields) {
