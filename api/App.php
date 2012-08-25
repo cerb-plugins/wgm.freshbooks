@@ -186,6 +186,57 @@ class WgmFreshbooksHelper {
 		
 		return $model;
 	}
+	
+	static function importOrSyncInvoiceXml($xml_invoice) {
+		$invoice_id = (integer) $xml_invoice->invoice_id;
+	
+		if(empty($invoice_id))
+			return false;
+			
+		// Pull the created date
+		$created_str = (string) $xml_invoice->created;
+		if(false === ($created = strtotime($created_str))) {
+			$created = time();
+		} else {
+			$date = new DateTime($created_str, new DateTimeZone('America/New_York'));
+			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+			$created = strtotime($date->format('Y-m-d H:i:s'));
+		}
+	
+		// Pull the updated date
+		$updated_str = (string) $xml_invoice->updated;
+		if(false === ($updated = strtotime($updated_str))) {
+			$updated = time();
+		} else {
+			$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
+			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+			$updated = strtotime($date->format('Y-m-d H:i:s'));
+		}
+	
+		$fields = array(
+				DAO_FreshbooksInvoice::CLIENT_ID => (integer) $xml_invoice->client_id,
+				DAO_FreshbooksInvoice::NUMBER => (string) $xml_invoice->number,
+				DAO_FreshbooksInvoice::AMOUNT => (float) $xml_invoice->amount,
+				DAO_FreshbooksInvoice::STATUS => (string) $xml_invoice->status,
+				DAO_FreshbooksInvoice::CREATED => $created,
+				DAO_FreshbooksInvoice::UPDATED => $updated,
+				DAO_FreshbooksInvoice::DATA_JSON => json_encode(new SimpleXMLElement($xml_invoice->asXML(), LIBXML_NOCDATA)),
+		);
+	
+		// Insert/Update
+		if(null == ($model = DAO_FreshbooksInvoice::get($invoice_id))) {
+			$fields[DAO_FreshbooksInvoice::ID] = $invoice_id;
+			DAO_FreshbooksInvoice::create($fields);
+		} else {
+			DAO_FreshbooksInvoice::update($invoice_id, $fields);
+		}
+	
+		// Refresh model
+		if(null == ($model = DAO_FreshbooksInvoice::get($invoice_id)))
+			return false;
+	
+		return $model;
+	}
 }
 
 class WgmFreshbooks_EventListener extends DevblocksEventListenerExtension {
@@ -475,6 +526,8 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		$this->_downloadClients();
 		$this->_synchronizeClients();
 		
+		$this->_downloadInvoices();
+		
 		$logger->info("Finished");
 	}
 	
@@ -608,26 +661,90 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		$this->setParam('clients.updated_from', time());
 	}
 	
+	private function _downloadInvoices() {
+		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
+		$freshbooks = WgmFreshbooksAPI::getInstance();
+	
+		$updated_from_timestamp = $this->getParam('invoices.updated_from', 0);
+	
+		// Pull the synchronize date from settings
+		if(empty($updated_from_timestamp)) {
+			$updated_from = '2000-01-01 00:00:00';
+		} else {
+			// For whatever weird reason, Freshbooks dealss with EDT/EST timestamps
+			$date = new DateTime(gmdate("Y-m-d H:i:s", $updated_from_timestamp), new DateTimeZone('GMT'));
+			$date->setTimezone(new DateTimeZone('America/New_York'));
+			$updated_from  = $date->format('Y-m-d H:i:s');
+		}
+	
+		$logger->info(sprintf("Downloading invoice records updated since %s EDT", $updated_from));
+	
+		$params = array(
+				'updated_from' => $updated_from,
+				'page' => 1,
+				'per_page' => 100,
+				'folder' => 'active'
+		);
+	
+		// [TODO] Disable keys
+		// [TODO] Empty table optimization: check count first then always insert if empty
+	
+		do {
+			if(false == ($xml = $freshbooks->request('invoice.list', $params)))
+				return false;
+				
+			// Stats
+			$page = (integer) $xml->invoices['page'];
+			$num_pages = (integer) $xml->invoices['pages'];
+			$total = (integer) $xml->invoices['total'];
+				
+			foreach($xml->invoices->invoice as $xml_invoice) {
+				WgmFreshbooksHelper::importOrSyncInvoiceXml($xml_invoice);
+			}
+				
+			// Next page, if exists
+			$params['page']++;
+	
+		} while($page < $num_pages);
+	
+		$logger->info(sprintf("Downloaded %d updated invoice records", $total));
+	
+		// [TODO] Enable keys
+	
+		// Save the synchronize date as right now in GMT
+// 		$this->setParam('invoices.updated_from', time());
+	}
+	
 	public function configure($instance) {
 		$tpl = DevblocksPlatform::getTemplateService();
 		$tpl->cache_lifetime = "0";
 
 		// Load settings
-		$updated_from = $this->getParam('clients.updated_from', 0);
-		if(empty($updated_from))
-			$updated_from = gmmktime(0,0,0,1,1,2000);
-		$tpl->assign('updated_from', $updated_from);
+		$clients_updated_from = $this->getParam('clients.updated_from', 0);
+		if(empty($clients_updated_from))
+			$clients_updated_from = gmmktime(0,0,0,1,1,2000);
+		
+		$invoices_updated_from = $this->getParam('invoices.updated_from', 0);
+		if(empty($invoices_updated_from))
+			$invoices_updated_from = gmmktime(0,0,0,1,1,2000);
+		
+		$tpl->assign('clients_updated_from', $clients_updated_from);
 		
 		$tpl->display('devblocks:wgm.freshbooks::config/cron.tpl');
 	}
 	
 	public function saveConfigurationAction() {
-		@$updated_from = DevblocksPlatform::importGPC($_POST['updated_from'], 'string', '');
+		@$clients_updated_from = DevblocksPlatform::importGPC($_POST['clients_updated_from'], 'string', '');
+		@$invoices_updated_from = DevblocksPlatform::importGPC($_POST['invoices_updated_from'], 'string', '');
 		
 		// Save settings
-		$timestamp = intval(@strtotime($updated_from));
-		if(!empty($timestamp))
-			$this->setParam('clients.updated_from', $timestamp);
+		$clients_timestamp = intval(@strtotime($clients_updated_from));
+		if(!empty($clients_timestamp))
+			$this->setParam('clients.updated_from', $clients_timestamp);
+		
+		$invoices_timestamp = intval(@strtotime($invoices_updated_from));
+		if(!empty($invoices_timestamp))
+			$this->setParam('invoices.updated_from', $invoices_timestamp);
 	}
 };
 

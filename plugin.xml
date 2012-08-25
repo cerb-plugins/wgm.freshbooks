@@ -25,6 +25,7 @@
 	
 	<patches>
 		<patch version="5.3.0" revision="2" file="patches/5.3.0.php" />
+		<patch version="6.1.0" revision="3" file="patches/6.1.0.php" />
 	</patches>
 	
 	<!-- Exported Classes -->
@@ -40,6 +41,13 @@
 			<class name="Model_WgmFreshbooksClient" />
 			<class name="SearchFields_WgmFreshbooksClient" />
 			<class name="View_WgmFreshbooksClient" />
+		</file>
+		<file path="api/dao/freshbooks_invoice.php">
+			<class name="Context_FreshbooksInvoice" />
+			<class name="DAO_FreshbooksInvoice" />
+			<class name="Model_FreshbooksInvoice" />
+			<class name="SearchFields_FreshbooksInvoice" />
+			<class name="View_FreshbooksInvoice" />
 		</file>
 	</class_loader>
 
@@ -60,6 +68,29 @@
 				<param key="alias" value="freshbooks_client" />
 				<param key="dao_class" value="DAO_WgmFreshbooksClient" />
 				<param key="view_class" value="View_WgmFreshbooksClient" />
+				<param key="options">
+					<value>
+						<!--<data key="create" />-->
+						<data key="find" />
+						<!--<data key="snippets" />-->
+						<data key="va_variable" />
+						<data key="workspace" />
+					</value>
+				</param>
+			</params>
+		</extension>
+		
+		<extension point="devblocks.context">
+			<id>wgm.freshbooks.contexts.invoice</id>
+			<name>Freshbooks Invoice</name>
+			<class>
+				<file>api/dao/freshbooks_invoice.php</file>
+				<name>Context_FreshbooksInvoice</name>
+			</class>
+			<params>
+				<param key="alias" value="freshbooks_invoice" />
+				<param key="dao_class" value="DAO_FreshbooksInvoice" />
+				<param key="view_class" value="View_FreshbooksInvoice" />
 				<param key="options">
 					<value>
 						<!--<data key="create" />-->

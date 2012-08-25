@@ -358,7 +358,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 		$tpl->assign('id', $this->id);
 		$tpl->assign('view', $this);
 
-		$tpl->display('devblocks:wgm.freshbooks::view.tpl');
+		$tpl->display('devblocks:wgm.freshbooks::clients.tpl');
 	}
 
 	function renderCriteria($field) {
