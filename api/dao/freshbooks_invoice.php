@@ -46,14 +46,15 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 
 		// SQL
 		$sql = "SELECT id, client_id, number, amount, status, created, updated, data_json ".
-				"FROM freshbooks_invoice ".
-				$where_sql.
-				$sort_sql.
-				$limit_sql
-				;
-				$rs = $db->Execute($sql);
+			"FROM freshbooks_invoice ".
+			$where_sql.
+			$sort_sql.
+			$limit_sql
+			;
 
-				return self::_getObjectsFromResult($rs);
+		$rs = $db->Execute($sql);
+
+		return self::_getObjectsFromResult($rs);
 	}
 
 	/**
@@ -61,8 +62,8 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 	 * @return Model_FreshbooksInvoice	 */
 	static function get($id) {
 		$objects = self::getWhere(sprintf("%s = %d",
-				self::ID,
-				$id
+			self::ID,
+			$id
 		));
 
 		if(isset($objects[$id]))
@@ -169,27 +170,27 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 		$has_multiple_values = false; // [TODO] Temporary when custom fields disabled
 
 		$where_sql = "".
-				(!empty($wheres) ? sprintf("WHERE %s ",implode(' AND ',$wheres)) : "WHERE 1 ");
+			(!empty($wheres) ? sprintf("WHERE %s ",implode(' AND ',$wheres)) : "WHERE 1 ");
 			
 		$sort_sql = (!empty($sortBy)) ? sprintf("ORDER BY %s %s ",$sortBy,($sortAsc || is_null($sortAsc))?"ASC":"DESC") : " ";
 
 		array_walk_recursive(
-				$params,
-				array('DAO_FreshbooksInvoice', '_translateVirtualParameters'),
-				array(
-						'join_sql' => &$join_sql,
-						'where_sql' => &$where_sql,
-						'has_multiple_values' => &$has_multiple_values
-				)
+			$params,
+			array('DAO_FreshbooksInvoice', '_translateVirtualParameters'),
+			array(
+				'join_sql' => &$join_sql,
+				'where_sql' => &$where_sql,
+				'has_multiple_values' => &$has_multiple_values
+			)
 		);
 
 		return array(
-				'primary_table' => 'freshbooks_invoice',
-				'select' => $select_sql,
-				'join' => $join_sql,
-				'where' => $where_sql,
-				'has_multiple_values' => $has_multiple_values,
-				'sort' => $sort_sql,
+			'primary_table' => 'freshbooks_invoice',
+			'select' => $select_sql,
+			'join' => $join_sql,
+			'where' => $where_sql,
+			'has_multiple_values' => $has_multiple_values,
+			'sort' => $sort_sql,
 		);
 	}
 
@@ -238,12 +239,13 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 		$sort_sql = $query_parts['sort'];
 
 		$sql =
-		$select_sql.
-		$join_sql.
-		$where_sql.
-		($has_multiple_values ? 'GROUP BY freshbooks_invoice.id ' : '').
-		$sort_sql;
-			
+			$select_sql.
+			$join_sql.
+			$where_sql.
+			($has_multiple_values ? 'GROUP BY freshbooks_invoice.id ' : '').
+			$sort_sql
+			;
+				
 		if($limit > 0) {
 			$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
 		} else {
@@ -352,6 +354,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		$this->view_columns = array(
 			SearchFields_FreshbooksInvoice::STATUS,
 			SearchFields_FreshbooksInvoice::AMOUNT,
+			SearchFields_FreshbooksInvoice::CREATED,
 			SearchFields_FreshbooksInvoice::UPDATED,
 		);
 		
@@ -370,13 +373,13 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 
 	function getData() {
 		$objects = DAO_FreshbooksInvoice::search(
-				$this->view_columns,
-				$this->getParams(),
-				$this->renderLimit,
-				$this->renderPage,
-				$this->renderSortBy,
-				$this->renderSortAsc,
-				$this->renderTotal
+			$this->view_columns,
+			$this->getParams(),
+			$this->renderLimit,
+			$this->renderPage,
+			$this->renderSortBy,
+			$this->renderSortAsc,
+			$this->renderTotal
 		);
 		return $objects;
 	}
@@ -395,7 +398,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		$fields = array();
 
 		if(is_array($all_fields))
-			foreach($all_fields as $field_key => $field_model) {
+		foreach($all_fields as $field_key => $field_model) {
 			$pass = false;
 				
 			switch($field_key) {
@@ -620,17 +623,18 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		$pg = 0;
 
 		if(empty($ids))
-			do {
-				list($objects,$null) = DAO_FreshbooksInvoice::search(
-					array(),
-					$this->getParams(),
-					100,
-					$pg++,
-					SearchFields_FreshbooksInvoice::ID,
-					true,
-					false
-					);
-					$ids = array_merge($ids, array_keys($objects));
+		do {
+			list($objects,$null) = DAO_FreshbooksInvoice::search(
+				array(),
+				$this->getParams(),
+				100,
+				$pg++,
+				SearchFields_FreshbooksInvoice::ID,
+				true,
+				false
+			);
+
+			$ids = array_merge($ids, array_keys($objects));
 
 		} while(!empty($objects));
 
@@ -676,9 +680,9 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 			$url .= '-' . $friendly;
 
 		return array(
-				'id' => $invoice->id,
-				'name' => $invoice->number,
-				'permalink' => $url,
+			'id' => $invoice->id,
+			'name' => $invoice->number,
+			'permalink' => $url,
 		);
 	}
 
@@ -758,7 +762,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		switch($token) {
 			case 'watchers':
 				$watchers = array(
-				$token => CerberusContexts::getWatchers($context, $context_id, true),
+					$token => CerberusContexts::getWatchers($context, $context_id, true),
 				);
 				$values = array_merge($values, $watchers);
 				break;
@@ -811,8 +815,8 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 
 		if(!empty($context) && !empty($context_id)) {
 			$params_req = array(
-					new DevblocksSearchCriteria(SearchFields_FreshbooksInvoice::CONTEXT_LINK,'=',$context),
-					new DevblocksSearchCriteria(SearchFields_FreshbooksInvoice::CONTEXT_LINK_ID,'=',$context_id),
+				new DevblocksSearchCriteria(SearchFields_FreshbooksInvoice::CONTEXT_LINK,'=',$context),
+				new DevblocksSearchCriteria(SearchFields_FreshbooksInvoice::CONTEXT_LINK_ID,'=',$context_id),
 			);
 		}
 

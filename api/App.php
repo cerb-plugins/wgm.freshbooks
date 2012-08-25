@@ -155,8 +155,10 @@ class WgmFreshbooksHelper {
 		
 		// Pull the updated date
 		$updated_str = (string) $xml_client->updated;
+		
 		if(false === ($updated = strtotime($updated_str))) {
 			$updated = time();
+			
 		} else {
 			$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
 			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
@@ -192,11 +194,13 @@ class WgmFreshbooksHelper {
 	
 		if(empty($invoice_id))
 			return false;
-			
+		
 		// Pull the created date
 		$created_str = (string) $xml_invoice->created;
+		
 		if(false === ($created = strtotime($created_str))) {
 			$created = time();
+			
 		} else {
 			$date = new DateTime($created_str, new DateTimeZone('America/New_York'));
 			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
@@ -205,8 +209,10 @@ class WgmFreshbooksHelper {
 	
 		// Pull the updated date
 		$updated_str = (string) $xml_invoice->updated;
+		
 		if(false === ($updated = strtotime($updated_str))) {
 			$updated = time();
+			
 		} else {
 			$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
 			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
@@ -214,19 +220,20 @@ class WgmFreshbooksHelper {
 		}
 	
 		$fields = array(
-				DAO_FreshbooksInvoice::CLIENT_ID => (integer) $xml_invoice->client_id,
-				DAO_FreshbooksInvoice::NUMBER => (string) $xml_invoice->number,
-				DAO_FreshbooksInvoice::AMOUNT => (float) $xml_invoice->amount,
-				DAO_FreshbooksInvoice::STATUS => (string) $xml_invoice->status,
-				DAO_FreshbooksInvoice::CREATED => $created,
-				DAO_FreshbooksInvoice::UPDATED => $updated,
-				DAO_FreshbooksInvoice::DATA_JSON => json_encode(new SimpleXMLElement($xml_invoice->asXML(), LIBXML_NOCDATA)),
+			DAO_FreshbooksInvoice::CLIENT_ID => (integer) $xml_invoice->client_id,
+			DAO_FreshbooksInvoice::NUMBER => (string) $xml_invoice->number,
+			DAO_FreshbooksInvoice::AMOUNT => (float) $xml_invoice->amount,
+			DAO_FreshbooksInvoice::STATUS => (string) $xml_invoice->status,
+			DAO_FreshbooksInvoice::CREATED => $created,
+			DAO_FreshbooksInvoice::UPDATED => $updated,
+			DAO_FreshbooksInvoice::DATA_JSON => json_encode(new SimpleXMLElement($xml_invoice->asXML(), LIBXML_NOCDATA)),
 		);
 	
 		// Insert/Update
 		if(null == ($model = DAO_FreshbooksInvoice::get($invoice_id))) {
 			$fields[DAO_FreshbooksInvoice::ID] = $invoice_id;
 			DAO_FreshbooksInvoice::create($fields);
+			
 		} else {
 			DAO_FreshbooksInvoice::update($invoice_id, $fields);
 		}
@@ -255,6 +262,7 @@ class WgmFreshbooks_EventListener extends DevblocksEventListenerExtension {
     	@$merge_to_id = $event->params['merge_to_id'];
     	@$merge_from_ids = $event->params['merge_from_ids'];
     	
+    	// [TODO] This should merge invoice client_ids too
     	DAO_WgmFreshbooksClient::mergeOrgIds($merge_from_ids, $merge_to_id);
     }
 }
@@ -670,6 +678,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		// Pull the synchronize date from settings
 		if(empty($updated_from_timestamp)) {
 			$updated_from = '2000-01-01 00:00:00';
+			
 		} else {
 			// For whatever weird reason, Freshbooks dealss with EDT/EST timestamps
 			$date = new DateTime(gmdate("Y-m-d H:i:s", $updated_from_timestamp), new DateTimeZone('GMT'));
@@ -680,10 +689,10 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		$logger->info(sprintf("Downloading invoice records updated since %s EDT", $updated_from));
 	
 		$params = array(
-				'updated_from' => $updated_from,
-				'page' => 1,
-				'per_page' => 100,
-				'folder' => 'active'
+			'updated_from' => $updated_from,
+			'page' => 1,
+			'per_page' => 100,
+			'folder' => 'active'
 		);
 	
 		// [TODO] Disable keys
