@@ -321,7 +321,7 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 			self::STATUS => new DevblocksSearchField(self::STATUS, 'freshbooks_invoice', 'status', $translate->_('common.status'), null),
 			self::CREATED => new DevblocksSearchField(self::CREATED, 'freshbooks_invoice', 'created', $translate->_('common.created'), Model_CustomField::TYPE_DATE),
 			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'freshbooks_invoice', 'updated', $translate->_('common.updated'), Model_CustomField::TYPE_DATE),
-			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'freshbooks_invoice', 'data_json', $translate->_('dao.freshbooks_invoice.data_json'), null),
+			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'freshbooks_invoice', 'data_json', null, null),
 				
 			self::CLIENT_ACCOUNT_NAME => new DevblocksSearchField(self::CLIENT_ACCOUNT_NAME, 'wgm_freshbooks_client', 'account_name', $translate->_('dao.wgm_freshbooks_client.account_name'), Model_CustomField::TYPE_SINGLE_LINE),
 		);
@@ -379,7 +379,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 
 		$this->addParamsHidden(array(
 			SearchFields_FreshbooksInvoice::ID,
-			SearchFields_WgmFreshbooksClient::DATA_JSON,
+			SearchFields_FreshbooksInvoice::DATA_JSON,
 		));
 
 		$this->doResetCriteria();
