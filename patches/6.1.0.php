@@ -23,6 +23,20 @@ if(!isset($tables['freshbooks_invoice'])) {
 		) ENGINE=%s;
 	", APP_DB_ENGINE);
 	$db->Execute($sql);
+	
+	$tables['freshbooks_invoice'] = 'freshbooks_invoice';
+}
+
+// ===========================================================================
+// Add wgm_freshbooks_client.balance
+
+if(!isset($tables['wgm_freshbooks_client']))
+	return FALSE;
+
+list($columns, $indexes) = $db->metaTable('wgm_freshbooks_client');
+
+if(!isset($columns['balance'])) {
+	$db->Execute("ALTER TABLE wgm_freshbooks_client ADD COLUMN balance DECIMAL(8,2) UNSIGNED NOT NULL DEFAULT 0.00");
 }
 
 return TRUE;

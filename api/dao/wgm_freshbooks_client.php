@@ -6,6 +6,7 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 	const ORG_ID = 'org_id';
 	const UPDATED = 'updated';
 	const SYNCHRONIZED = 'synchronized';
+	const BALANCE = 'balance';
 	const DATA_JSON = 'data_json';
 
 	static function create($fields) {
@@ -61,7 +62,7 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 		list($where_sql, $sort_sql, $limit_sql) = self::_getWhereSQL($where, $sortBy, $sortAsc, $limit);
 		
 		// SQL
-		$sql = "SELECT id, account_name, email_id, org_id, updated, synchronized, data_json ".
+		$sql = "SELECT id, account_name, email_id, org_id, updated, synchronized, balance, data_json ".
 			"FROM wgm_freshbooks_client ".
 			$where_sql.
 			$sort_sql.
@@ -102,6 +103,7 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 			$object->org_id = $row['org_id'];
 			$object->updated = $row['updated'];
 			$object->synchronized = $row['synchronized'];
+			$object->balance = $row['balance'];
 			
 			if(!empty($row['data_json']))
 				$object->data = @json_decode($row['data_json'], true);
@@ -146,7 +148,8 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 			"wgm_freshbooks_client.org_id as %s, ".
 			"contact_org.name as %s, ".
 			"wgm_freshbooks_client.updated as %s, ".
-			"wgm_freshbooks_client.synchronized as %s ",
+			"wgm_freshbooks_client.synchronized as %s, ".
+			"wgm_freshbooks_client.balance as %s ",
 			//"wgm_freshbooks_client.data_json as %s ",
 				SearchFields_WgmFreshbooksClient::ID,
 				SearchFields_WgmFreshbooksClient::ACCOUNT_NAME,
@@ -156,7 +159,8 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 				SearchFields_WgmFreshbooksClient::ORG_ID,
 				SearchFields_WgmFreshbooksClient::ORG_NAME,
 				SearchFields_WgmFreshbooksClient::UPDATED,
-				SearchFields_WgmFreshbooksClient::SYNCHRONIZED
+				SearchFields_WgmFreshbooksClient::SYNCHRONIZED,
+				SearchFields_WgmFreshbooksClient::BALANCE
 				//SearchFields_WgmFreshbooksClient::DATA_JSON
 			);
 			
@@ -245,6 +249,16 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 		
 		return array($results,$total);
 	}
+	
+	static function updateBalances() {
+		$db = DevblocksPlatform::getDatabaseService();
+
+		$db->Execute("DROP TABLE IF EXISTS _tmp_balance");
+		$db->Execute("UPDATE wgm_freshbooks_client SET balance = 0.00 WHERE balance > 0");
+		$db->Execute("CREATE TEMPORARY TABLE _tmp_balance SELECT SUM(amount) AS balance, client_id FROM freshbooks_invoice WHERE status NOT IN (1,5,6) GROUP BY client_id");
+		$db->Execute("UPDATE wgm_freshbooks_client INNER JOIN _tmp_balance ON (_tmp_balance.client_id=wgm_freshbooks_client.id) SET wgm_freshbooks_client.balance=_tmp_balance.balance");
+		$db->Execute("DROP TABLE _tmp_balance");
+	}
 };
 
 class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
@@ -254,6 +268,7 @@ class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
 	const ORG_ID = 'w_org_id';
 	const UPDATED = 'w_updated';
 	const SYNCHRONIZED = 'w_synchronized';
+	const BALANCE = 'w_balance';
 	const DATA_JSON = 'w_data_json';
 	
 	const EMAIL_ADDRESS = 'a_email';
@@ -273,6 +288,7 @@ class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
 			self::ORG_ID => new DevblocksSearchField(self::ORG_ID, 'wgm_freshbooks_client', 'org_id', $translate->_('contact_org.name')),
 			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'wgm_freshbooks_client', 'updated', $translate->_('common.updated'), Model_CustomField::TYPE_DATE),
 			self::SYNCHRONIZED => new DevblocksSearchField(self::SYNCHRONIZED, 'wgm_freshbooks_client', 'synchronized', $translate->_('dao.wgm_freshbooks_client.synchronized'), Model_CustomField::TYPE_DATE),
+			self::BALANCE => new DevblocksSearchField(self::BALANCE, 'wgm_freshbooks_client', 'balance', $translate->_('dao.wgm_freshbooks_client.balance'), Model_CustomField::TYPE_NUMBER),
 			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'wgm_freshbooks_client', 'data_json', $translate->_('dao.wgm_freshbooks_client.data_json'), null),
 			
 			self::EMAIL_ADDRESS => new DevblocksSearchField(self::EMAIL_ADDRESS, 'address', 'email', $translate->_('common.email'), Model_CustomField::TYPE_SINGLE_LINE),
@@ -294,6 +310,7 @@ class Model_WgmFreshbooksClient {
 	public $org_id;
 	public $updated;
 	public $synchronized;
+	public $balance;
 	public $data; // decoded
 };
 
@@ -312,9 +329,8 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 		$this->view_columns = array(
 			SearchFields_WgmFreshbooksClient::ORG_NAME,
 			SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS,
-			SearchFields_WgmFreshbooksClient::ID,
 			SearchFields_WgmFreshbooksClient::UPDATED,
-			SearchFields_WgmFreshbooksClient::SYNCHRONIZED,
+			SearchFields_WgmFreshbooksClient::BALANCE,
 		);
 		
 		$this->addColumnsHidden(array(
@@ -371,6 +387,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 			case SearchFields_WgmFreshbooksClient::ORG_NAME:
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__string.tpl');
 				break;
+			case SearchFields_WgmFreshbooksClient::BALANCE:
 			case SearchFields_WgmFreshbooksClient::ID:
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__number.tpl');
 				break;
@@ -409,6 +426,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 				$criteria = $this->_doSetCriteriaString($field, $oper, $value);
 				break;
 				
+			case SearchFields_WgmFreshbooksClient::BALANCE:
 			case SearchFields_WgmFreshbooksClient::ID:
 				$criteria = new DevblocksSearchCriteria($field,$oper,$value);
 				break;

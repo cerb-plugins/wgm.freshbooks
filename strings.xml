@@ -28,6 +28,9 @@
 		<tu tuid='dao.wgm_freshbooks_client.account_name'>
 			<tuv xml:lang="en_US"><seg>Account Name</seg></tuv>
 		</tu>
+		<tu tuid='dao.wgm_freshbooks_client.balance'>
+			<tuv xml:lang="en_US"><seg>Balance</seg></tuv>
+		</tu>
 		<tu tuid='dao.wgm_freshbooks_client.client_id'>
 			<tuv xml:lang="en_US"><seg>Client ID</seg></tuv>
 		</tu>

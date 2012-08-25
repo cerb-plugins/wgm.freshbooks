@@ -727,6 +727,9 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	
 		// Save the synchronize date as right now in GMT
  		$this->setParam('invoices.updated_from', time());
+ 		
+ 		// Update balance information
+ 		DAO_WgmFreshbooksClient::updateBalances();
 	}
 	
 	public function configure($instance) {
