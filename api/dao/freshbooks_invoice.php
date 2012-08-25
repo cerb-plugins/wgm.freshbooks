@@ -134,14 +134,15 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy);
 
 		$select_sql = sprintf("SELECT ".
-				"freshbooks_invoice.id as %s, ".
-				"freshbooks_invoice.client_id as %s, ".
-				"freshbooks_invoice.number as %s, ".
-				"freshbooks_invoice.amount as %s, ".
-				"freshbooks_invoice.status as %s, ".
-				"freshbooks_invoice.created as %s, ".
-				"freshbooks_invoice.updated as %s, ".
-				"freshbooks_invoice.data_json as %s ",
+			"freshbooks_invoice.id as %s, ".
+			"freshbooks_invoice.client_id as %s, ".
+			"freshbooks_invoice.number as %s, ".
+			"freshbooks_invoice.amount as %s, ".
+			"freshbooks_invoice.status as %s, ".
+			"freshbooks_invoice.created as %s, ".
+			"freshbooks_invoice.updated as %s, ".
+			"freshbooks_invoice.data_json as %s, ".
+			"wgm_freshbooks_client.account_name as %s ",
 				SearchFields_FreshbooksInvoice::ID,
 				SearchFields_FreshbooksInvoice::CLIENT_ID,
 				SearchFields_FreshbooksInvoice::NUMBER,
@@ -149,10 +150,13 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 				SearchFields_FreshbooksInvoice::STATUS,
 				SearchFields_FreshbooksInvoice::CREATED,
 				SearchFields_FreshbooksInvoice::UPDATED,
-				SearchFields_FreshbooksInvoice::DATA_JSON
+				SearchFields_FreshbooksInvoice::DATA_JSON,
+				SearchFields_FreshbooksInvoice::CLIENT_ACCOUNT_NAME
 		);
 			
-		$join_sql = "FROM freshbooks_invoice ";
+		$join_sql = "FROM freshbooks_invoice ".
+			"INNER JOIN wgm_freshbooks_client ON (wgm_freshbooks_client.id=freshbooks_invoice.client_id) "
+			;
 
 		// Custom field joins
 		//list($select_sql, $join_sql, $has_multiple_values) = self::_appendSelectJoinSqlForCustomFieldTables(
@@ -284,6 +288,8 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 	const CREATED = 'f_created';
 	const UPDATED = 'f_updated';
 	const DATA_JSON = 'f_data_json';
+	
+	const CLIENT_ACCOUNT_NAME = 'fc_account_name';
 
 	/**
 	 * @return DevblocksSearchField[]
@@ -300,6 +306,8 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 			self::CREATED => new DevblocksSearchField(self::CREATED, 'freshbooks_invoice', 'created', $translate->_('common.created')),
 			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'freshbooks_invoice', 'updated', $translate->_('common.updated')),
 			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'freshbooks_invoice', 'data_json', $translate->_('dao.freshbooks_invoice.data_json')),
+				
+			self::CLIENT_ACCOUNT_NAME => new DevblocksSearchField(self::CLIENT_ACCOUNT_NAME, 'wgm_freshbooks_client', 'account_name', $translate->_('dao.wgm_freshbooks_client.account_name')),
 		);
 
 		// Custom Fields
@@ -342,9 +350,8 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		$this->renderSortAsc = true;
 
 		$this->view_columns = array(
-			SearchFields_FreshbooksInvoice::CLIENT_ID,
-			SearchFields_FreshbooksInvoice::AMOUNT,
 			SearchFields_FreshbooksInvoice::STATUS,
+			SearchFields_FreshbooksInvoice::AMOUNT,
 			SearchFields_FreshbooksInvoice::UPDATED,
 		);
 		
