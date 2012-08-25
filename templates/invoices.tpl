@@ -83,6 +83,13 @@
 				<td>{$result.$column|number_format:2}</td>
 			{elseif $column=="f_number"}
 				<td>{$result.$column|number_format:0:'':''}</td>
+			{elseif $column=="f_status"}
+				<td>
+					{$status_id = $result.$column}
+					{if isset($statuses.$status_id)}
+						{$statuses.$status_id}
+					{/if}
+				</td>
 			{elseif $column=="f_client_id"}
 				<td><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context=wgm.freshbooks.contexts.clients&context_id={$result.f_client_id}&view_id={$view->id}',null,false,'550');">{$result.$column}</a></td>
 			{else}

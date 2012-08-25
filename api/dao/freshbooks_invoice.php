@@ -278,7 +278,21 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 
 		return array($results,$total);
 	}
-
+	
+	static function getStatuses() {
+		return array(
+			// 0 => 'unknown'
+			1 => 'draft',
+			2 => 'sent',
+			3 => 'viewed',
+			4 => 'pending',
+			5 => 'paid',
+			6 => 'auto-paid',
+			7 => 'disputed',
+			8 => 'retry',
+			9 => 'failed',
+		);
+	}
 };
 
 class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
@@ -304,7 +318,7 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 			self::CLIENT_ID => new DevblocksSearchField(self::CLIENT_ID, 'freshbooks_invoice', 'client_id', $translate->_('dao.freshbooks_invoice.client_id'), Model_CustomField::TYPE_NUMBER),
 			self::NUMBER => new DevblocksSearchField(self::NUMBER, 'freshbooks_invoice', 'number', $translate->_('dao.freshbooks_invoice.number'), Model_CustomField::TYPE_NUMBER),
 			self::AMOUNT => new DevblocksSearchField(self::AMOUNT, 'freshbooks_invoice', 'amount', $translate->_('dao.freshbooks_invoice.amount'), Model_CustomField::TYPE_NUMBER),
-			self::STATUS => new DevblocksSearchField(self::STATUS, 'freshbooks_invoice', 'status', $translate->_('common.status'), Model_CustomField::TYPE_SINGLE_LINE),
+			self::STATUS => new DevblocksSearchField(self::STATUS, 'freshbooks_invoice', 'status', $translate->_('common.status'), null),
 			self::CREATED => new DevblocksSearchField(self::CREATED, 'freshbooks_invoice', 'created', $translate->_('common.created'), Model_CustomField::TYPE_DATE),
 			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'freshbooks_invoice', 'updated', $translate->_('common.updated'), Model_CustomField::TYPE_DATE),
 			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'freshbooks_invoice', 'data_json', $translate->_('dao.freshbooks_invoice.data_json'), null),
@@ -470,6 +484,9 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		$tpl->assign('id', $this->id);
 		$tpl->assign('view', $this);
 
+		$statuses = DAO_FreshbooksInvoice::getStatuses();
+		$tpl->assign('statuses', $statuses);
+		
 		// Custom fields
 		//$custom_fields = DAO_CustomField::getByContext(CerberusContexts::XXX);
 		//$tpl->assign('custom_fields', $custom_fields);
@@ -487,9 +504,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			case SearchFields_FreshbooksInvoice::ID:
 
 			case SearchFields_FreshbooksInvoice::AMOUNT:
-			case SearchFields_FreshbooksInvoice::STATUS:
-
-			case SearchFields_FreshbooksInvoice::DATA_JSON:
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__string.tpl');
 				break;
 
@@ -507,6 +521,12 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__date.tpl');
 				break;
 
+			case SearchFields_FreshbooksInvoice::STATUS:
+				$options = DAO_FreshbooksInvoice::getStatuses();
+				$tpl->assign('options', $options);
+				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__list.tpl');
+				break;
+				
 				/*
 				 default:
 				// Custom Fields
@@ -525,6 +545,18 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		$values = !is_array($param->value) ? array($param->value) : $param->value;
 
 		switch($field) {
+			case SearchFields_FreshbooksInvoice::STATUS:
+				$statuses = DAO_FreshbooksInvoice::getStatuses();
+				$strings = array();
+
+				foreach($values as $k) {
+					if(isset($statuses[$k]))
+						$strings[] = $statuses[$k];
+				}
+				
+				echo implode(' or ', $strings);
+				break;
+				
 			default:
 				parent::renderCriteriaParam($param);
 				break;
@@ -551,9 +583,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			case SearchFields_FreshbooksInvoice::ID:
 
 			case SearchFields_FreshbooksInvoice::AMOUNT:
-			case SearchFields_FreshbooksInvoice::STATUS:
-
-			case SearchFields_FreshbooksInvoice::DATA_JSON:
 				$criteria = $this->_doSetCriteriaString($field, $oper, $value);
 				break;
 			
@@ -572,6 +601,11 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				$criteria = new DevblocksSearchCriteria($field,$oper,$bool);
 				break;
 
+			case SearchFields_FreshbooksInvoice::STATUS:
+				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',array());
+				$criteria = new DevblocksSearchCriteria($field,$oper,$options);
+				break;
+				
 				/*
 				 default:
 				// Custom Fields

@@ -192,6 +192,8 @@ class WgmFreshbooksHelper {
 	static function importOrSyncInvoiceXml($xml_invoice) {
 		$invoice_id = (integer) $xml_invoice->invoice_id;
 	
+		$statuses = array_flip(DAO_FreshbooksInvoice::getStatuses());
+		
 		if(empty($invoice_id))
 			return false;
 		
@@ -219,11 +221,14 @@ class WgmFreshbooksHelper {
 			$updated = strtotime($date->format('Y-m-d H:i:s'));
 		}
 	
+		$status_label = strtolower((string) $xml_invoice->status);
+		@$status_id = $statuses[$status_label];
+		
 		$fields = array(
 			DAO_FreshbooksInvoice::CLIENT_ID => (integer) $xml_invoice->client_id,
 			DAO_FreshbooksInvoice::NUMBER => (string) $xml_invoice->number,
 			DAO_FreshbooksInvoice::AMOUNT => (float) $xml_invoice->amount,
-			DAO_FreshbooksInvoice::STATUS => (string) $xml_invoice->status,
+			DAO_FreshbooksInvoice::STATUS => $status_id,
 			DAO_FreshbooksInvoice::CREATED => $created,
 			DAO_FreshbooksInvoice::UPDATED => $updated,
 			DAO_FreshbooksInvoice::DATA_JSON => json_encode(new SimpleXMLElement($xml_invoice->asXML(), LIBXML_NOCDATA)),
