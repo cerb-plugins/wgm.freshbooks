@@ -196,7 +196,7 @@ class WgmFreshbooksHelper {
 			return false;
 		
 		// Pull the created date
-		$created_str = (string) $xml_invoice->created;
+		$created_str = (string) $xml_invoice->date;
 		
 		if(false === ($created = strtotime($created_str))) {
 			$created = time();
