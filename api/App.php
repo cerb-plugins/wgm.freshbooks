@@ -217,7 +217,7 @@ class WgmFreshbooksHelper {
 			
 		} else {
 			$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
-			$date->setTimezone(new DateTimeZone('GMT'));
+			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
 			$updated = strtotime($date->format('Y-m-d H:i:s'));
 		}
 	
