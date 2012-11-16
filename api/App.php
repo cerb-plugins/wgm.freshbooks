@@ -202,19 +202,17 @@ class WgmFreshbooksHelper {
 		
 		if(false === ($created = strtotime($created_str))) {
 			$created = time();
-			
 		} else {
 			$date = new DateTime($created_str, new DateTimeZone('America/New_York'));
 			$date->setTimezone(new DateTimeZone('GMT'));
 			$created = strtotime($date->format('Y-m-d H:i:s'));
 		}
-	
+		
 		// Pull the updated date
 		$updated_str = (string) $xml_invoice->updated;
 		
 		if(false === ($updated = strtotime($updated_str))) {
 			$updated = time();
-			
 		} else {
 			$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
 			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
@@ -233,20 +231,19 @@ class WgmFreshbooksHelper {
 			DAO_FreshbooksInvoice::UPDATED => $updated,
 			DAO_FreshbooksInvoice::DATA_JSON => json_encode(new SimpleXMLElement($xml_invoice->asXML(), LIBXML_NOCDATA)),
 		);
-	
+		
 		// Insert/Update
 		if(null == ($model = DAO_FreshbooksInvoice::get($invoice_id))) {
 			$fields[DAO_FreshbooksInvoice::ID] = $invoice_id;
 			DAO_FreshbooksInvoice::create($fields);
-			
 		} else {
 			DAO_FreshbooksInvoice::update($invoice_id, $fields);
 		}
-	
+		
 		// Refresh model
 		if(null == ($model = DAO_FreshbooksInvoice::get($invoice_id)))
 			return false;
-	
+		
 		return $model;
 	}
 }
@@ -663,7 +660,6 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 			
 			// Next page, if exists
 			$params['page']++;
-			
 		} while($page < $num_pages);
 		
 		$logger->info(sprintf("Downloaded %d updated client records", $total));
@@ -677,54 +673,85 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	private function _downloadInvoices() {
 		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
 		$freshbooks = WgmFreshbooksAPI::getInstance();
-	
+		
 		$updated_from_timestamp = $this->getParam('invoices.updated_from', 0);
-	
+		
 		// Pull the synchronize date from settings
 		if(empty($updated_from_timestamp)) {
 			$updated_from = '2000-01-01 00:00:00';
-			
 		} else {
-			// For whatever weird reason, Freshbooks dealss with EDT/EST timestamps
+			// For whatever weird reason, Freshbooks deals with EDT/EST timestamps
 			$date = new DateTime(gmdate("Y-m-d H:i:s", $updated_from_timestamp), new DateTimeZone('GMT'));
 			$date->setTimezone(new DateTimeZone('America/New_York'));
 			$updated_from  = $date->format('Y-m-d H:i:s');
 		}
-	
+		
 		$logger->info(sprintf("Downloading invoice records updated since %s EDT", $updated_from));
-	
+		
 		$params = array(
 			'updated_from' => $updated_from,
 			'page' => 1,
 			'per_page' => 100,
 			'folder' => 'active'
 		);
-	
+		
 		// [TODO] Disable keys
 		// [TODO] Empty table optimization: check count first then always insert if empty
-	
+		
 		do {
 			if(false == ($xml = $freshbooks->request('invoice.list', $params)))
 				return false;
-				
+			
 			// Stats
 			$page = (integer) $xml->invoices['page'];
 			$num_pages = (integer) $xml->invoices['pages'];
 			$total = (integer) $xml->invoices['total'];
-				
+			
 			foreach($xml->invoices->invoice as $xml_invoice) {
 				WgmFreshbooksHelper::importOrSyncInvoiceXml($xml_invoice);
 			}
-				
+			
 			// Next page, if exists
 			$params['page']++;
-	
 		} while($page < $num_pages);
-	
+		
 		$logger->info(sprintf("Downloaded %d updated invoice records", $total));
-	
+
+		$logger->info(sprintf("Downloading invoice records deleted since %s EDT", $updated_from));
+
+		$delete_ids = array();
+
+		$params['page'] = 1;
+		$params['folder'] = 'deleted';
+
+		// [TODO] Disable keys
+		// [TODO] Empty table optimization: check count first then always insert if empty
+
+		do {
+			if(false == ($xml = $freshbooks->request('invoice.list', $params)))
+				return false;
+
+			// Stats
+			$page = (integer) $xml->invoices['page'];
+			$num_pages = (integer) $xml->invoices['pages'];
+			$total = (integer) $xml->invoices['total'];
+
+			foreach($xml->invoices->invoice as $xml_invoice) {
+				$delete_ids[] = $xml_invoice->invoice_id;
+			}
+
+			// Next page, if exists
+			$params['page']++;
+
+		} while($page < $num_pages);
+
+		$logger->info(sprintf("Removed %d deleted invoice records", $total));
+
+		if(!empty($delete_ids))
+			DAO_FreshbooksInvoice::delete($delete_ids);
+
 		// [TODO] Enable keys
-	
+		
 		// Save the synchronize date as right now in GMT
  		$this->setParam('invoices.updated_from', time());
  		
