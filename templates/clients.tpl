@@ -87,7 +87,7 @@
 						<span style="background-color:rgb(242,222,105);">set org:</span>
 						<input type="hidden" name="client_id[]" value="{$result.w_id}">
 						<input type="text" name="org_lookup[]" size="32" value="{if !empty($org)}{$org->name}{/if}" class="autocomplete_org input_search">
-						<div class="badge badge-lightgray"><a href="javascript:;" style="text-decoration:none;" onclick="$(this).parent().prev('INPUT.autocomplete_org').val('{$result.w_account_name|replace:"'":"\\'"}');">Add new organization</a></div>
+						<div class="badge badge-lightgray"><a href="javascript:;" style="text-decoration:none;" onclick="$(this).parent().siblings('INPUT.autocomplete_org').val('{$result.w_account_name|replace:"'":"\\'"}');">Add new organization</a></div>
 					{else}
 						<a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context={CerberusContexts::CONTEXT_ORG}&context_id={$result.w_org_id}&view_id={$view->id}',null,false,'600');">{$result.$column}</a>
 					{/if}
