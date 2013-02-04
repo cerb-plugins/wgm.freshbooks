@@ -1,6 +1,7 @@
 <?php
 class DAO_FreshbooksInvoice extends C4_ORMHelper {
 	const ID = 'id';
+	const INVOICE_ID = 'invoice_id';
 	const CLIENT_ID = 'client_id';
 	const NUMBER = 'number';
 	const AMOUNT = 'amount';
@@ -77,7 +78,7 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 		list($where_sql, $sort_sql, $limit_sql) = self::_getWhereSQL($where, $sortBy, $sortAsc, $limit);
 
 		// SQL
-		$sql = "SELECT id, client_id, number, amount, status, created, updated, data_json ".
+		$sql = "SELECT id, invoice_id, client_id, number, amount, status, created, updated, data_json ".
 			"FROM freshbooks_invoice ".
 			$where_sql.
 			$sort_sql.
@@ -103,6 +104,11 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 
 		return null;
 	}
+	
+	static function getByInvoiceId($invoice_id) {
+		$results = self::getWhere(sprintf("%s = %d", DAO_FreshbooksInvoice::INVOICE_ID, $invoice_id));
+		return array_shift($results);
+	}
 
 	/**
 	 * @param resource $rs
@@ -114,6 +120,7 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 		while($row = mysql_fetch_assoc($rs)) {
 			$object = new Model_FreshbooksInvoice();
 			$object->id = $row['id'];
+			$object->invoice_id = $row['invoice_id'];
 			$object->client_id = $row['client_id'];
 			$object->number = $row['number'];
 			$object->amount = $row['amount'];
@@ -168,6 +175,7 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 
 		$select_sql = sprintf("SELECT ".
 			"freshbooks_invoice.id as %s, ".
+			"freshbooks_invoice.invoice_id as %s, ".
 			"freshbooks_invoice.client_id as %s, ".
 			"freshbooks_invoice.number as %s, ".
 			"freshbooks_invoice.amount as %s, ".
@@ -177,6 +185,7 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 			"freshbooks_invoice.data_json as %s, ".
 			"wgm_freshbooks_client.account_name as %s ",
 				SearchFields_FreshbooksInvoice::ID,
+				SearchFields_FreshbooksInvoice::INVOICE_ID,
 				SearchFields_FreshbooksInvoice::CLIENT_ID,
 				SearchFields_FreshbooksInvoice::NUMBER,
 				SearchFields_FreshbooksInvoice::AMOUNT,
@@ -330,6 +339,7 @@ class DAO_FreshbooksInvoice extends C4_ORMHelper {
 
 class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 	const ID = 'f_id';
+	const INVOICE_ID = 'f_invoice_id';
 	const CLIENT_ID = 'f_client_id';
 	const NUMBER = 'f_number';
 	const AMOUNT = 'f_amount';
@@ -348,6 +358,7 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 
 		$columns = array(
 			self::ID => new DevblocksSearchField(self::ID, 'freshbooks_invoice', 'id', $translate->_('common.id'), null),
+			self::INVOICE_ID => new DevblocksSearchField(self::INVOICE_ID, 'freshbooks_invoice', 'invoice_id', $translate->_('dao.freshbooks_invoice.invoice_id'), Model_CustomField::TYPE_NUMBER),
 			self::CLIENT_ID => new DevblocksSearchField(self::CLIENT_ID, 'freshbooks_invoice', 'client_id', $translate->_('dao.freshbooks_invoice.client_id'), Model_CustomField::TYPE_NUMBER),
 			self::NUMBER => new DevblocksSearchField(self::NUMBER, 'freshbooks_invoice', 'number', $translate->_('dao.freshbooks_invoice.number'), Model_CustomField::TYPE_NUMBER),
 			self::AMOUNT => new DevblocksSearchField(self::AMOUNT, 'freshbooks_invoice', 'amount', $translate->_('dao.freshbooks_invoice.amount'), Model_CustomField::TYPE_NUMBER),
@@ -377,6 +388,7 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 
 class Model_FreshbooksInvoice {
 	public $id;
+	public $invoice_id;
 	public $client_id;
 	public $number;
 	public $amount;
@@ -407,11 +419,13 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		
 		$this->addColumnsHidden(array(
 			SearchFields_FreshbooksInvoice::ID,
+			SearchFields_FreshbooksInvoice::INVOICE_ID,
 			SearchFields_FreshbooksInvoice::DATA_JSON,
 		));
 
 		$this->addParamsHidden(array(
 			SearchFields_FreshbooksInvoice::ID,
+			SearchFields_FreshbooksInvoice::INVOICE_ID,
 			SearchFields_FreshbooksInvoice::DATA_JSON,
 		));
 
@@ -544,6 +558,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__string.tpl');
 				break;
 
+			case SearchFields_FreshbooksInvoice::INVOICE_ID:
 			case SearchFields_FreshbooksInvoice::CLIENT_ID:
 			case SearchFields_FreshbooksInvoice::NUMBER:
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__number.tpl');
@@ -737,12 +752,12 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 			return '';
 
 		$url_writer = DevblocksPlatform::getUrlService();
-		$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_invoicet&id='.$context_id, true);
+		$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_invoice&id='.$context_id, true);
 		return $url;
 	}
 
 	function getMeta($context_id) {
-		$client = DAO_FreshbooksInvoice::get($context_id);
+		$invoice = DAO_FreshbooksInvoice::get($context_id);
 
 		$url = $this->profileGetUrl($context_id);
 		$friendly = DevblocksPlatform::strToPermalink($invoice->number);
@@ -752,7 +767,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 
 		return array(
 			'id' => $invoice->id,
-			'name' => $invoice->number,
+			'name' => sprintf("#%d - %0.2f", $invoice->number, $invoice->amount),
 			'permalink' => $url,
 		);
 	}

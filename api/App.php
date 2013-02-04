@@ -225,6 +225,7 @@ class WgmFreshbooksHelper {
 		@$status_id = $statuses[$status_label];
 		
 		$fields = array(
+			DAO_FreshbooksInvoice::INVOICE_ID => $invoice_id,
 			DAO_FreshbooksInvoice::CLIENT_ID => (integer) $xml_invoice->client_id,
 			DAO_FreshbooksInvoice::NUMBER => (string) $xml_invoice->number,
 			DAO_FreshbooksInvoice::AMOUNT => (float) $xml_invoice->amount,
@@ -235,16 +236,15 @@ class WgmFreshbooksHelper {
 		);
 	
 		// Insert/Update
-		if(null == ($model = DAO_FreshbooksInvoice::get($invoice_id))) {
-			$fields[DAO_FreshbooksInvoice::ID] = $invoice_id;
+		if(null == ($model = DAO_FreshbooksInvoice::getByInvoiceId($invoice_id))) {
 			DAO_FreshbooksInvoice::create($fields);
 			
 		} else {
-			DAO_FreshbooksInvoice::update($invoice_id, $fields);
+			DAO_FreshbooksInvoice::update($model->id, $fields);
 		}
 	
 		// Refresh model
-		if(null == ($model = DAO_FreshbooksInvoice::get($invoice_id)))
+		if(null == ($model = DAO_FreshbooksInvoice::getByInvoiceId($invoice_id)))
 			return false;
 	
 		return $model;
@@ -658,7 +658,10 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 			$total = (integer) $xml->clients['total'];
 	
 			foreach($xml->clients->client as $xml_client) {
-				WgmFreshbooksHelper::importOrSyncClientXml($xml_client);
+				$model = WgmFreshbooksHelper::importOrSyncClientXml($xml_client);
+				
+				if($model)
+					$updated_from_timestamp = $model->updated;
 			}
 			
 			// Next page, if exists
@@ -671,7 +674,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		// [TODO] Enable keys
 		
 		// Save the synchronize date as right now in GMT
-		$this->setParam('clients.updated_from', time());
+		$this->setParam('clients.updated_from', $updated_from_timestamp);
 	}
 	
 	private function _downloadInvoices() {
@@ -713,7 +716,10 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 			$total = (integer) $xml->invoices['total'];
 				
 			foreach($xml->invoices->invoice as $xml_invoice) {
-				WgmFreshbooksHelper::importOrSyncInvoiceXml($xml_invoice);
+				$model = WgmFreshbooksHelper::importOrSyncInvoiceXml($xml_invoice); /* @var $model Model_FreshbooksInvoice */
+				
+				if($model)
+					$updated_from_timestamp = $model->updated;
 			}
 				
 			// Next page, if exists
@@ -726,7 +732,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		// [TODO] Enable keys
 	
 		// Save the synchronize date as right now in GMT
- 		$this->setParam('invoices.updated_from', time());
+ 		$this->setParam('invoices.updated_from', $updated_from_timestamp);
  		
  		// Update balance information
  		DAO_WgmFreshbooksClient::updateBalances();
