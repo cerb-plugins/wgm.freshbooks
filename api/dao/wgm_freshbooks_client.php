@@ -35,18 +35,18 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 	}
 	
 	static function mergeOrgIds($from_ids, $to_id) {
-    	$db = DevblocksPlatform::getDatabaseService();
-    	
-    	if(empty($to_id) || empty($from_ids))
-    		return false;
-    		
-    	if(!is_numeric($to_id) || !is_array($from_ids))
-    		return false;
-    	
-    	$db->Execute(sprintf("UPDATE wgm_freshbooks_client SET org_id = %d WHERE org_id IN (%s)",
-    		$to_id,
-    		implode(',', $from_ids)
-    	));
+		$db = DevblocksPlatform::getDatabaseService();
+		
+		if(empty($to_id) || empty($from_ids))
+			return false;
+			
+		if(!is_numeric($to_id) || !is_array($from_ids))
+			return false;
+		
+		$db->Execute(sprintf("UPDATE wgm_freshbooks_client SET org_id = %d WHERE org_id IN (%s)",
+			$to_id,
+			implode(',', $from_ids)
+		));
 	}
 	
 	/**
@@ -137,7 +137,7 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 		if('*'==substr($sortBy,0,1) || !isset($fields[$sortBy]))
 			$sortBy=null;
 
-        list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy);
+	    list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy);
 		
 		$select_sql = sprintf("SELECT ".
 			"wgm_freshbooks_client.id as %s, ".
@@ -186,19 +186,19 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 		);
 	}
 	
-    /**
-     * Enter description here...
-     *
-     * @param array $columns
-     * @param DevblocksSearchCriteria[] $params
-     * @param integer $limit
-     * @param integer $page
-     * @param string $sortBy
-     * @param boolean $sortAsc
-     * @param boolean $withCounts
-     * @return array
-     */
-    static function search($columns, $params, $limit=10, $page=0, $sortBy=null, $sortAsc=null, $withCounts=true) {
+	/**
+	 * Enter description here...
+	 *
+	 * @param array $columns
+	 * @param DevblocksSearchCriteria[] $params
+	 * @param integer $limit
+	 * @param integer $page
+	 * @param string $sortBy
+	 * @param boolean $sortAsc
+	 * @param boolean $withCounts
+	 * @return array
+	 */
+	static function search($columns, $params, $limit=10, $page=0, $sortBy=null, $sortAsc=null, $withCounts=true) {
 		$db = DevblocksPlatform::getDatabaseService();
 		
 		// Build search queries
@@ -210,7 +210,7 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 		$has_multiple_values = $query_parts['has_multiple_values'];
 		$sort_sql = $query_parts['sort'];
 		
-		$sql = 
+		$sql =
 			$select_sql.
 			$join_sql.
 			$where_sql.
@@ -218,10 +218,10 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 			$sort_sql;
 			
 		if($limit > 0) {
-    		$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
+			$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
 		} else {
 		    $rs = $db->Execute($sql) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
-            $total = mysql_num_rows($rs);
+	        $total = mysql_num_rows($rs);
 		}
 		
 		$results = array();
@@ -238,7 +238,7 @@ class DAO_WgmFreshbooksClient extends C4_ORMHelper {
 
 		// [JAS]: Count all
 		if($withCounts) {
-			$count_sql = 
+			$count_sql =
 				($has_multiple_values ? "SELECT COUNT(DISTINCT wgm_freshbooks_client.id) " : "SELECT COUNT(wgm_freshbooks_client.id) ").
 				$join_sql.
 				$where_sql;
@@ -299,7 +299,7 @@ class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
 		// Sort by label (translation-conscious)
 		DevblocksPlatform::sortObjects($columns, 'db_label');
 
-		return $columns;		
+		return $columns;
 	}
 };
 
@@ -499,23 +499,23 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 		}
 
 		unset($ids);
-	}			
+	}
 };
 
 class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements IDevblocksContextProfile { //, IDevblocksContextPeek, IDevblocksContextImport
-    function getRandom() {
-    	//return DAO_WgmFreshbooksClient::random();
-    }
-    
-    function profileGetUrl($context_id) {
-    	if(empty($context_id))
-    		return '';
-    
-    	$url_writer = DevblocksPlatform::getUrlService();
-    	$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_client&id='.$context_id, true);
-    	return $url;
-    }
-    
+	function getRandom() {
+		//return DAO_WgmFreshbooksClient::random();
+	}
+	
+	function profileGetUrl($context_id) {
+		if(empty($context_id))
+			return '';
+	
+		$url_writer = DevblocksPlatform::getUrlService();
+		$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_client&id='.$context_id, true);
+		return $url;
+	}
+	
 	function getMeta($context_id) {
 		$client = DAO_WgmFreshbooksClient::get($context_id);
 		
@@ -531,7 +531,7 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 			'permalink' => $url,
 		);
 	}
-    
+	
 	function getContext($object, &$token_labels, &$token_values, $prefix=null) {
 		if(is_null($prefix))
 			$prefix = 'Freshbooks Client:';
@@ -585,9 +585,9 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 // 			$merge_token_values,
 // 			$token_labels,
 // 			$token_values
-// 		);		
+// 		);
 		
-		return true;		
+		return true;
 	}
 	
 	function lazyLoadContextValues($token, $dictionary) {
@@ -649,14 +649,14 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$view->renderTemplate = 'contextlinks_chooser';
 		
 		C4_AbstractViewLoader::setView($view_id, $view);
-		return $view;		
+		return $view;
 	}
 	
 	function getView($context=null, $context_id=null, $options=array()) {
 		$view_id = str_replace('.','_',$this->id);
 		
 		$defaults = new C4_AbstractViewModel();
-		$defaults->id = $view_id; 
+		$defaults->id = $view_id;
 		$defaults->class_name = $this->getViewClass();
 		$view = C4_AbstractViewLoader::getView($view_id, $defaults);
 		$view->name = 'Freshbooks Clients';

@@ -27,7 +27,7 @@ class WgmFreshbooksAPI {
 
 	private function _execute($request, $api_url=null, $api_token=null) {
 		$api_url = !empty($api_url) ? $api_url : $this->_api_url;
-		$api_token = !empty($api_token) ? $api_token : $this->_api_token; 
+		$api_token = !empty($api_token) ? $api_token : $this->_api_token;
 		
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -55,7 +55,7 @@ class WgmFreshbooksAPI {
 	}
 	
 	/**
-	 * 
+	 *
 	 * @param string $method
 	 * @param array $params
 	 * @return SimpleXMLElement|false
@@ -83,7 +83,7 @@ class WgmFreshbooksAPI {
 	}
 	
 	/**
-	 * 
+	 *
 	 * @param string $method
 	 * @param string $element
 	 * @param array $params
@@ -118,7 +118,7 @@ class WgmFreshbooksAPI {
 	
 	function testAuthentication($api_url, $api_token) {
 		$request = <<< EOF
-<?xml version="1.0" encoding="utf-8"?>		
+<?xml version="1.0" encoding="utf-8"?>
 <request method="staff.current">
 </request>
 EOF;
@@ -150,7 +150,7 @@ class WgmFreshbooksHelper {
 		$email_id = 0;
 		if(!empty($email)) {
 			if(null != ($address = DAO_Address::lookupAddress($email, true)))
-				$email_id = $address->id; 
+				$email_id = $address->id;
 		}
 		
 		// Pull the updated date
@@ -461,7 +461,7 @@ class WgmFreshbooksController extends DevblocksControllerExtension {
 			}
 		}
 	}
-};	
+};
 
 class WgmFreshbooks_SetupPageSection extends Extension_PageSection {
 	const ID = 'wgm.freshbooks.setup.section.freshbooks';
@@ -474,7 +474,7 @@ class WgmFreshbooks_SetupPageSection extends Extension_PageSection {
 		$params['api_token'] = DevblocksPlatform::getPluginSetting('wgm.freshbooks','api_token','');
 		$tpl->assign('params', $params);
 		
-		$tpl->display('devblocks:wgm.freshbooks::config/section.tpl');		
+		$tpl->display('devblocks:wgm.freshbooks::config/section.tpl');
 	}
 	
 	function saveAction() {
@@ -482,8 +482,8 @@ class WgmFreshbooks_SetupPageSection extends Extension_PageSection {
 			@$api_url = DevblocksPlatform::importGPC($_POST['api_url'],'string','');
 			@$api_token = DevblocksPlatform::importGPC($_POST['api_token'],'string','');
 	
-			DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_url',$api_url);		
-			DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_token',$api_token);		
+			DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_url',$api_url);
+			DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_token',$api_token);
 				
 		    echo json_encode(array('status'=>true, 'message'=>'Saved!'));
 		    return;
@@ -491,7 +491,7 @@ class WgmFreshbooks_SetupPageSection extends Extension_PageSection {
 		} catch(Exception $e) {
 			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
 			return;
-		}		
+		}
 		
 	}
 
@@ -629,6 +629,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		// Pull the synchronize date from settings
 		if(empty($updated_from_timestamp)) {
 			$updated_from = '2000-01-01 00:00:00';
+			
 		} else {
 			// For whatever weird reason, Freshbooks dealss with EDT/EST timestamps
 			$date = new DateTime(gmdate("Y-m-d H:i:s", $updated_from_timestamp), new DateTimeZone('GMT'));
