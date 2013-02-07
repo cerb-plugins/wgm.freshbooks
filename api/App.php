@@ -31,7 +31,7 @@ class WgmFreshbooksAPI {
 		
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $api_url);
-		curl_setopt($ch, CURLOPT_USERAGENT, 'Cerberus Helpdesk ' . APP_VERSION);
+		curl_setopt($ch, CURLOPT_USERAGENT, 'Cerb ' . APP_VERSION);
 		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		curl_setopt($ch, CURLOPT_USERPWD, $api_token.':X');
 		curl_setopt($ch, CURLOPT_HEADER, false);
@@ -535,8 +535,9 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	public function run() {
 		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
 		$logger->info("Started");
-			
+		
 		$this->_downloadClients();
+		
 		$this->_synchronizeClients();
 		
 		$this->_downloadInvoices();
@@ -662,13 +663,16 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 				$model = WgmFreshbooksHelper::importOrSyncClientXml($xml_client);
 				
 				if($model)
-					$updated_from_timestamp = $model->updated;
+					$updated_from_timestamp = max($updated_from_timestamp, $model->updated);
 			}
 			
 			// Next page, if exists
 			$params['page']++;
 			
 		} while($page < $num_pages);
+		
+		if(empty($total))
+			$updated_from_timestamp = time();
 		
 		$logger->info(sprintf("Downloaded %d updated client records", $total));
 		
@@ -720,7 +724,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 				$model = WgmFreshbooksHelper::importOrSyncInvoiceXml($xml_invoice); /* @var $model Model_FreshbooksInvoice */
 				
 				if($model)
-					$updated_from_timestamp = $model->updated;
+					$updated_from_timestamp = max($updated_from_timestamp, $model->updated);
 			}
 				
 			// Next page, if exists
@@ -728,6 +732,9 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	
 		} while($page < $num_pages);
 	
+		if(empty($total))
+			$updated_from_timestamp = time();
+		
 		$logger->info(sprintf("Downloaded %d updated invoice records", $total));
 	
 		// [TODO] Enable keys
