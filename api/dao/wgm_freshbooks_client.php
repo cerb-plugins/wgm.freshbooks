@@ -549,8 +549,10 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		
 		// Token labels
 		$token_labels = array(
-// 			'address' => $prefix.$translate->_('address.address'),
-// 			'record_url' => $prefix.$translate->_('common.url.record'),
+			'balance' => $prefix.$translate->_('dao.wgm_freshbooks_client.balance'),
+			'name' => $prefix.$translate->_('dao.wgm_freshbooks_client.account_name'),
+			'updated' => $prefix.$translate->_('common.updated'),
+//			'record_url' => $prefix.$translate->_('common.url.record'),
 		);
 		
 		// Token values
@@ -563,6 +565,9 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 			$token_values['_loaded'] = true;
 			$token_values['_label'] = $object->account_name;
 			$token_values['id'] = $object->id;
+			$token_values['name'] = $object->account_name;
+			$token_values['balance'] = $object->balance;
+			$token_values['updated'] = $object->updated;
 
 			// URL
 // 			$url_writer = DevblocksPlatform::getUrlService();

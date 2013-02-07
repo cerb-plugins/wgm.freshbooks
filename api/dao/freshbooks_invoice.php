@@ -789,8 +789,12 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 
 		// Token labels
 		$token_labels = array(
-		// 			'address' => $prefix.$translate->_('address.address'),
-		// 			'record_url' => $prefix.$translate->_('common.url.record'),
+			'amount' => $prefix.$translate->_('dao.freshbooks_invoice.amount'),
+			'created' => $prefix.$translate->_('common.created'),
+			'number' => $prefix.$translate->_('dao.freshbooks_invoice.number'),
+			'status' => $prefix.$translate->_('common.status'),
+			'updated' => $prefix.$translate->_('common.updated'),
+			//'record_url' => $prefix.$translate->_('common.url.record'),
 		);
 
 		// Token values
@@ -798,35 +802,40 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 
 		$token_values['_context'] = 'wgm.freshbooks.contexts.invoice';
 
-		// Address token values
+		// Invoice token values
 		if(null != $object) {
 			$token_values['_loaded'] = true;
 			$token_values['_label'] = $object->number;
 			$token_values['id'] = $object->id;
+			$token_values['amount'] = $object->amount;
+			$token_values['created'] = $object->created;
+			$token_values['number'] = $object->number;
+			$token_values['status'] = $object->status;
+			$token_values['updated'] = $object->updated;
 
+			// Client
+			$client_id = (null != $object && !empty($object->client_id)) ? $object->client_id : null;
+			$token_values['client_id'] = $client_id;
+			
 			// URL
-			// 			$url_writer = DevblocksPlatform::getUrlService();
-			// 			$token_values['record_url'] = $url_writer->writeNoProxy(sprintf("c=profiles&type=address&id=%d-%s",$address->id, DevblocksPlatform::strToPermalink($address->email)), true);
-				
-			// Org
-			// 			$org_id = (null != $address && !empty($address->contact_org_id)) ? $address->contact_org_id : null;
-			// 			$token_values['org_id'] = $org_id;
+			// $url_writer = DevblocksPlatform::getUrlService();
+			// $token_values['record_url'] = $url_writer->writeNoProxy(sprintf("c=profiles&type=address&id=%d-%s",$address->id, DevblocksPlatform::strToPermalink($address->email)), true);
 		}
 
-		// Email Org
-		// 		$merge_token_labels = array();
-		// 		$merge_token_values = array();
-		// 		CerberusContexts::getContext(CerberusContexts::CONTEXT_ORG, null, $merge_token_labels, $merge_token_values, null, true);
+		// Client
+		$merge_token_labels = array();
+		$merge_token_values = array();
+		CerberusContexts::getContext('wgm.freshbooks.contexts.client', null, $merge_token_labels, $merge_token_values, null, true);
 
-		// 		CerberusContexts::merge(
-		// 			'org_',
-		// 			'',
-		// 			$merge_token_labels,
-		// 			$merge_token_values,
-		// 			$token_labels,
-		// 			$token_values
-		// 		);
-
+		CerberusContexts::merge(
+			'client_',
+			'',
+			$merge_token_labels,
+			$merge_token_values,
+			$token_labels,
+			$token_values
+		);
+		
 		return true;
 	}
 
