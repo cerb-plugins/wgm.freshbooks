@@ -1,6 +1,6 @@
 Cerb Plugins - wgm.freshbooks
 ===========================================
-Copyright (C) 2012 WebGroup Media, LLC.  
+Copyright (C) 2012 Webgroup Media, LLC.  
 [http://www.cerberusweb.com/](http://www.cerberusweb.com/)  
 
 ![](https://github.com/cerb5-plugins/wgm.freshbooks/wiki/freshbooks_plugin.png)

@@ -1,5 +1,5 @@
 <?php
-class DAO_WgmFreshbooksClient extends C4_ORMHelper {
+class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	const ID = 'id';
 	const ACCOUNT_NAME = 'account_name';
 	const EMAIL_ID = 'email_id';

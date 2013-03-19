@@ -1,5 +1,5 @@
 <?php
-class DAO_FreshbooksInvoice extends C4_ORMHelper {
+class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	const ID = 'id';
 	const INVOICE_ID = 'invoice_id';
 	const CLIENT_ID = 'client_id';
