@@ -607,7 +607,7 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		
 		if(!$is_loaded) {
 			$labels = array();
-			CerberusContexts::getContext($context, $context_id, $labels, $values);
+			CerberusContexts::getContext($context, $context_id, $labels, $values, null, true);
 		}
 		
 		switch($token) {
