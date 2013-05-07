@@ -370,15 +370,6 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 			self::CLIENT_ACCOUNT_NAME => new DevblocksSearchField(self::CLIENT_ACCOUNT_NAME, 'wgm_freshbooks_client', 'account_name', $translate->_('dao.wgm_freshbooks_client.account_name'), Model_CustomField::TYPE_SINGLE_LINE),
 		);
 
-		// Custom Fields
-		//$fields = DAO_CustomField::getByContext(CerberusContexts::XXX);
-
-		//if(is_array($fields))
-		//foreach($fields as $field_id => $field) {
-		//	$key = 'cf_'.$field_id;
-		//	$columns[$key] = new DevblocksSearchField($key,$key,'field_value',$field->name,$field->type);
-		//}
-
 		// Sort by label (translation-conscious)
 		DevblocksPlatform::sortObjects($columns, 'db_label');
 
@@ -454,7 +445,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	}
 
 	function getSubtotalFields() {
-		$all_fields = $this->getParamsAvailable();
+		$all_fields = $this->getParamsAvailable(true);
 
 		$fields = array();
 
