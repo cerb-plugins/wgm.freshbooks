@@ -363,6 +363,10 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 		return $objects;
 	}
 	
+	function getDataAsObjects($ids=null) {
+		return $this->_getDataAsObjects('DAO_WgmFreshbooksClient', $ids);
+	}
+
 	function getDataSample($size) {
 		return $this->_doGetDataSample('DAO_WgmFreshbooksClient', $size);
 	}
@@ -637,10 +641,6 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		
 		$view = C4_AbstractViewLoader::getView($view_id, $defaults);
 		$view->name = 'Freshbooks Clients';
-		
-// 		$view->view_columns = array(
-// 			SearchFields_WgmFreshbooksClient::ACCOUNT_NAME,
-// 		);
 		
 		$view->addParamsDefault(array(
 		), true);
