@@ -536,6 +536,14 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		);
 	}
 	
+	// [TODO] Interface
+	function getDefaultProperties() {
+		return array(
+			'balance',
+			'updated',
+		);
+	}
+	
 	function getContext($object, &$token_labels, &$token_values, $prefix=null) {
 		if(is_null($prefix))
 			$prefix = 'Freshbooks Client:';
@@ -553,16 +561,27 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		
 		// Token labels
 		$token_labels = array(
+			'_label' => $prefix,
 			'balance' => $prefix.$translate->_('dao.wgm_freshbooks_client.balance'),
 			'name' => $prefix.$translate->_('dao.wgm_freshbooks_client.account_name'),
 			'updated' => $prefix.$translate->_('common.updated'),
 //			'record_url' => $prefix.$translate->_('common.url.record'),
 		);
 		
+		// Token types
+		$token_types = array(
+			'_label' => 'context_url',
+			'balance' => Model_CustomField::TYPE_NUMBER,
+			'name' => Model_CustomField::TYPE_SINGLE_LINE,
+			'updated' => Model_CustomField::TYPE_DATE,
+//			'record_url' => Model_CustomField::TYPE_URL,
+		);
+		
 		// Token values
 		$token_values = array();
 		
 		$token_values['_context'] = 'wgm.freshbooks.contexts.client';
+		$token_values['_types'] = $token_types;
 
 		// Address token values
 		if(null != $object) {

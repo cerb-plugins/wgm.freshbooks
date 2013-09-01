@@ -762,6 +762,18 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 			'permalink' => $url,
 		);
 	}
+	
+	// [TODO] Interface
+	function getDefaultProperties() {
+		return array(
+			'client__label',
+			'number',
+			'amount',
+			'status',
+			'created',
+			'updated',
+		);
+	}
 
 	function getContext($object, &$token_labels, &$token_values, $prefix=null) {
 		if(is_null($prefix))
@@ -780,6 +792,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 
 		// Token labels
 		$token_labels = array(
+			'_label' => $prefix,
 			'amount' => $prefix.$translate->_('dao.freshbooks_invoice.amount'),
 			'created' => $prefix.$translate->_('common.created'),
 			'number' => $prefix.$translate->_('dao.freshbooks_invoice.number'),
@@ -788,21 +801,41 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 			//'record_url' => $prefix.$translate->_('common.url.record'),
 		);
 
+		// Token types
+		$token_types = array(
+			'_label' => 'context_url',
+			'amount' => Model_CustomField::TYPE_NUMBER,
+			'created' => Model_CustomField::TYPE_DATE,
+			'number' => Model_CustomField::TYPE_NUMBER,
+			'status' => Model_CustomField::TYPE_SINGLE_LINE,
+			'updated' => Model_CustomField::TYPE_DATE,
+			//'record_url' => Model_CustomField::TYPE_URL,
+		);
+
 		// Token values
 		$token_values = array();
 
 		$token_values['_context'] = 'wgm.freshbooks.contexts.invoice';
+		$token_values['_types'] = $token_types;
 
 		// Invoice token values
 		if(null != $object) {
+			$client = DAO_WgmFreshbooksClient::get($object->client_id);
+			
 			$token_values['_loaded'] = true;
-			$token_values['_label'] = $object->number;
+			$token_values['_label'] = sprintf("#%s - \$%d%s",
+				intval($object->number),
+				intval($object->amount),
+				(isset($client->account_name) ? (' to ' . $client->account_name) : '')
+			);
 			$token_values['id'] = $object->id;
-			$token_values['amount'] = $object->amount;
+			$token_values['amount'] = intval($object->amount);
 			$token_values['created'] = $object->created;
-			$token_values['number'] = $object->number;
-			$token_values['status'] = $object->status;
+			$token_values['number'] = intval($object->number);
 			$token_values['updated'] = $object->updated;
+			
+			$statuses = DAO_FreshbooksInvoice::getStatuses();
+			$token_values['status'] = isset($statuses[$object->status]) ? $statuses[$object->status] : '';
 
 			// Client
 			$client_id = (null != $object && !empty($object->client_id)) ? $object->client_id : null;
