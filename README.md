@@ -1,9 +1,9 @@
 Cerb Plugins - wgm.freshbooks
 ===========================================
-Copyright (C) 2012 Webgroup Media, LLC.  
+Copyright (C) 2012-2014 Webgroup Media, LLC.  
 [http://www.cerberusweb.com/](http://www.cerberusweb.com/)  
 
-![](https://github.com/cerb5-plugins/wgm.freshbooks/wiki/freshbooks_plugin.png)
+![](https://github.com/cerb-plugins/wgm.freshbooks/wiki/freshbooks_plugin.png)
 
 Experimental
 ------------
@@ -12,17 +12,20 @@ This plugin is currently being developed and is offered on an experimental basis
 What's this?
 ------------
 This plugin integrates [Freshbooks](https://webgroupmedia.freshbooks.com/refer/www
-) into Cerb5 for synchronizing customer contact information, generating estimates, logging paid time against client projects, etc.
+) into Cerb for synchronizing customer contact information, generating estimates, logging paid time against client projects, etc.
 
 Installation
 ------------
-* Change directory to **/cerb6/storage/plugins/**
+This plugin can be installed and upgraded automatically through **Setup->Plugins->Library**.
+
+For development purposes:
+* Change directory to **/cerb/storage/plugins/**
 * `git clone git://github.com/cerb-plugins/wgm.freshbooks.git`
-* In your helpdesk, enable the plugin from **Setup->Features & Plugins**.
+* In your helpdesk, enable the plugin from **Setup->Plugins->Installed**.
 
 Credits
 -------
-This plugin was developed by [WebGroup Media, LLC](http://www.cerberusweb.com/).
+This plugin was developed by [Webgroup Media, LLC](http://www.cerberusweb.com/).
 Development was sponsored by [Nolan Interactive](http://www.nolaninteractive.com/).  
 
 License
@@ -39,6 +42,6 @@ You should have received a copy of the GNU General Public License along with thi
 Screenshots
 -----------
 ### Configuring API authentication
-![](https://github.com/cerb5-plugins/wgm.freshbooks/wiki/freshbooks_config.png)
+![](https://github.com/cerb-plugins/wgm.freshbooks/wiki/freshbooks_config.png)
 ### Linking Freshbooks clients to Cerb5 organizations
-![](https://github.com/cerb5-plugins/wgm.freshbooks/wiki/freshbooks_link_orgs.png)
+![](https://github.com/cerb-plugins/wgm.freshbooks/wiki/freshbooks_link_orgs.png)
