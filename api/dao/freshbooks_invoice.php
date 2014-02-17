@@ -197,7 +197,8 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 		);
 			
 		$join_sql = "FROM freshbooks_invoice ".
-			"INNER JOIN wgm_freshbooks_client ON (wgm_freshbooks_client.id=freshbooks_invoice.client_id) "
+			"INNER JOIN wgm_freshbooks_client ON (wgm_freshbooks_client.id=freshbooks_invoice.client_id) ".
+			(isset($tables['context_link']) ? "INNER JOIN context_link ON (context_link.to_context = 'wgm.freshbooks.contexts.invoice' AND context_link.to_context_id = freshbooks_invoice.id) " : " ")
 			;
 
 		// Custom field joins
@@ -240,13 +241,17 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 		if(!is_a($param, 'DevblocksSearchCriteria'))
 			return;
 			
-		//$from_context = CerberusContexts::CONTEXT_EXAMPLE;
-		//$from_index = 'example.id';
+		$from_context = 'wgm.freshbooks.contexts.invoice';
+		$from_index = 'freshbooks_invoice.id';
 
 		$param_key = $param->field;
 		settype($param_key, 'string');
 
 		switch($param_key) {
+			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
+				$args['has_multiple_values'] = true;
+				self::_searchComponentsVirtualContextLinks($param, $from_context, $from_index, $args['join_sql'], $args['where_sql']);
+				break;
 			/*
 			 case SearchFields_EXAMPLE::VIRTUAL_WATCHERS:
 			$args['has_multiple_values'] = true;
@@ -349,6 +354,13 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 	const DATA_JSON = 'f_data_json';
 	
 	const CLIENT_ACCOUNT_NAME = 'fc_account_name';
+	
+	const VIRTUAL_CONTEXT_LINK = '*_context_link';
+	const VIRTUAL_HAS_FIELDSET = '*_has_fieldset';
+	const VIRTUAL_WATCHERS = '*_workers';
+	
+	const CONTEXT_LINK = 'cl_context_from';
+	const CONTEXT_LINK_ID = 'cl_context_from_id';
 
 	/**
 	 * @return DevblocksSearchField[]
@@ -366,8 +378,15 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 			self::CREATED => new DevblocksSearchField(self::CREATED, 'freshbooks_invoice', 'created', $translate->_('common.created'), Model_CustomField::TYPE_DATE),
 			self::UPDATED => new DevblocksSearchField(self::UPDATED, 'freshbooks_invoice', 'updated', $translate->_('common.updated'), Model_CustomField::TYPE_DATE),
 			self::DATA_JSON => new DevblocksSearchField(self::DATA_JSON, 'freshbooks_invoice', 'data_json', null, null),
-				
+			
 			self::CLIENT_ACCOUNT_NAME => new DevblocksSearchField(self::CLIENT_ACCOUNT_NAME, 'wgm_freshbooks_client', 'account_name', $translate->_('dao.wgm_freshbooks_client.account_name'), Model_CustomField::TYPE_SINGLE_LINE),
+			
+			self::VIRTUAL_CONTEXT_LINK => new DevblocksSearchField(self::VIRTUAL_CONTEXT_LINK, '*', 'context_link', $translate->_('common.links'), null),
+			self::VIRTUAL_HAS_FIELDSET => new DevblocksSearchField(self::VIRTUAL_HAS_FIELDSET, '*', 'has_fieldset', $translate->_('common.fieldset'), null),
+			self::VIRTUAL_WATCHERS => new DevblocksSearchField(self::VIRTUAL_WATCHERS, '*', 'workers', $translate->_('common.watchers'), 'WS'),
+			
+			self::CONTEXT_LINK => new DevblocksSearchField(self::CONTEXT_LINK, 'context_link', 'from_context', null),
+			self::CONTEXT_LINK_ID => new DevblocksSearchField(self::CONTEXT_LINK_ID, 'context_link', 'from_context_id', null),
 		);
 
 		// Sort by label (translation-conscious)
@@ -412,6 +431,9 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			SearchFields_FreshbooksInvoice::ID,
 			SearchFields_FreshbooksInvoice::INVOICE_ID,
 			SearchFields_FreshbooksInvoice::DATA_JSON,
+			SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK,
+			SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET,
+			SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS,
 		));
 
 		$this->addParamsHidden(array(
@@ -460,10 +482,11 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 					break;
 				
 				// Virtuals
-				//				case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
-				//				case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
-				//					$pass = true;
-				//					break;
+				case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
+				case SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET:
+				case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
+					$pass = true;
+					break;
 					
 				// Valid custom fields
 				default:
@@ -492,21 +515,17 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				$counts = $this->_getSubtotalCountForStringColumn('DAO_FreshbooksInvoice', $column, $label_map, 'in', 'options[]');
 				break;
 			
-			//			case SearchFields_FreshbooksInvoice::EXAMPLE_BOOL:
-			//				$counts = $this->_getSubtotalCountForBooleanColumn('DAO_FreshbooksInvoice', $column);
-			//				break;
+			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
+				$counts = $this->_getSubtotalCountForContextLinkColumn('DAO_FreshbooksInvoice', 'wgm.freshbooks.contexts.invoice', $column);
+				break;
 
-			//			case SearchFields_FreshbooksInvoice::EXAMPLE_STRING:
-			//				$counts = $this->_getSubtotalCountForStringColumn('DAO_FreshbooksInvoice', $column);
-			//				break;
-
-			//			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
-			//				$counts = $this->_getSubtotalCountForContextLinkColumn('DAO_FreshbooksInvoice', 'example.context', $column);
-			//				break;
-
-			//			case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
-			//				$counts = $this->_getSubtotalCountForWatcherColumn('DAO_FreshbooksInvoice', $column);
-			//				break;
+			case SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET:
+				$counts = $this->_getSubtotalCountForHasFieldsetColumn('DAO_FreshbooksInvoice', 'wgm.freshbooks.contexts.invoice', $column);
+				break;
+				
+			case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
+				$counts = $this->_getSubtotalCountForWatcherColumn('DAO_FreshbooksInvoice', $column);
+				break;
 				
 			default:
 				// Custom fields
@@ -570,6 +589,20 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__list.tpl');
 				break;
 				
+			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
+				$contexts = Extension_DevblocksContext::getAll(false);
+				$tpl->assign('contexts', $contexts);
+				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__context_link.tpl');
+				break;
+				
+			case SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET:
+				$this->_renderCriteriaHasFieldset($tpl, 'wgm.freshbooks.contexts.invoice');
+				break;
+				
+			case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
+				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__context_worker.tpl');
+				break;
+				
 				/*
 				 default:
 				// Custom Fields
@@ -605,13 +638,24 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				break;
 		}
 	}
-
+	
 	function renderVirtualCriteria($param) {
 		$key = $param->field;
-
+		
 		$translate = DevblocksPlatform::getTranslationService();
-
+		
 		switch($key) {
+			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
+				$this->_renderVirtualContextLinks($param);
+				break;
+				
+			case SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET:
+				$this->_renderVirtualHasFieldset($param);
+				break;
+			
+			case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
+				$this->_renderVirtualWatchers($param);
+				break;
 		}
 	}
 
@@ -647,6 +691,21 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			case SearchFields_FreshbooksInvoice::STATUS:
 				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',array());
 				$criteria = new DevblocksSearchCriteria($field,$oper,$options);
+				break;
+				
+			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
+				@$context_links = DevblocksPlatform::importGPC($_REQUEST['context_link'],'array',array());
+				$criteria = new DevblocksSearchCriteria($field,DevblocksSearchCriteria::OPER_IN,$context_links);
+				break;
+				
+			case SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET:
+				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',array());
+				$criteria = new DevblocksSearchCriteria($field,DevblocksSearchCriteria::OPER_IN,$options);
+				break;
+				
+			case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
+				@$worker_ids = DevblocksPlatform::importGPC($_REQUEST['worker_id'],'array',array());
+				$criteria = new DevblocksSearchCriteria($field,$oper,$worker_ids);
 				break;
 				
 				/*

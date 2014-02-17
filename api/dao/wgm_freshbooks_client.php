@@ -166,7 +166,8 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 			
 		$join_sql = "FROM wgm_freshbooks_client ".
 			"LEFT JOIN contact_org ON (wgm_freshbooks_client.org_id = contact_org.id) ".
-			"LEFT JOIN address ON (wgm_freshbooks_client.email_id = address.id) "
+			"LEFT JOIN address ON (wgm_freshbooks_client.email_id = address.id) ".
+			(isset($tables['context_link']) ? "INNER JOIN context_link ON (context_link.to_context = 'wgm.freshbooks.contexts.client' AND context_link.to_context_id = wgm_freshbooks_client.id) " : " ")
 		;
 		
 		$has_multiple_values = false; // [TODO] Temporary when custom fields disabled
@@ -176,6 +177,17 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 			
 		$sort_sql = (!empty($sortBy)) ? sprintf("ORDER BY %s %s ",$sortBy,($sortAsc || is_null($sortAsc))?"ASC":"DESC") : " ";
 	
+		array_walk_recursive(
+			$params,
+			array('DAO_WgmFreshbooksClient', '_translateVirtualParameters'),
+			array(
+				'join_sql' => &$join_sql,
+				'where_sql' => &$where_sql,
+				'tables' => &$tables,
+				'has_multiple_values' => &$has_multiple_values
+			)
+		);
+
 		return array(
 			'primary_table' => 'wgm_freshbooks_client',
 			'select' => $select_sql,
@@ -184,6 +196,30 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 			'has_multiple_values' => $has_multiple_values,
 			'sort' => $sort_sql,
 		);
+	}
+	
+	private static function _translateVirtualParameters($param, $key, &$args) {
+		if(!is_a($param, 'DevblocksSearchCriteria'))
+			return;
+			
+		//$from_context = CerberusContexts::CONTEXT_EXAMPLE;
+		//$from_index = 'example.id';
+
+		$param_key = $param->field;
+		settype($param_key, 'string');
+
+		switch($param_key) {
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK:
+				$args['has_multiple_values'] = true;
+				self::_searchComponentsVirtualContextLinks($param, $from_context, $from_index, $args['join_sql'], $args['where_sql']);
+				break;
+			/*
+			 case SearchFields_EXAMPLE::VIRTUAL_WATCHERS:
+			$args['has_multiple_values'] = true;
+			self::_searchComponentsVirtualWatchers($param, $from_context, $from_index, $args['join_sql'], $args['where_sql'], $args['tables']);
+			break;
+			*/
+		}
 	}
 	
 	/**
@@ -275,6 +311,13 @@ class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
 	const EMAIL_ORG_ID = 'a_email_contact_org_id';
 	const ORG_NAME = 'o_name';
 	
+	const VIRTUAL_CONTEXT_LINK = '*_context_link';
+	const VIRTUAL_HAS_FIELDSET = '*_has_fieldset';
+	const VIRTUAL_WATCHERS = '*_workers';
+	
+	const CONTEXT_LINK = 'cl_context_from';
+	const CONTEXT_LINK_ID = 'cl_context_from_id';
+	
 	/**
 	 * @return DevblocksSearchField[]
 	 */
@@ -294,6 +337,13 @@ class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
 			self::EMAIL_ADDRESS => new DevblocksSearchField(self::EMAIL_ADDRESS, 'address', 'email', $translate->_('common.email'), Model_CustomField::TYPE_SINGLE_LINE),
 			self::EMAIL_ORG_ID => new DevblocksSearchField(self::EMAIL_ORG_ID, 'address', 'contact_org_id'),
 			self::ORG_NAME => new DevblocksSearchField(self::ORG_NAME, 'contact_org', 'name', $translate->_('contact_org.name'), Model_CustomField::TYPE_SINGLE_LINE),
+				
+			self::VIRTUAL_CONTEXT_LINK => new DevblocksSearchField(self::VIRTUAL_CONTEXT_LINK, '*', 'context_link', $translate->_('common.links'), null),
+			self::VIRTUAL_HAS_FIELDSET => new DevblocksSearchField(self::VIRTUAL_HAS_FIELDSET, '*', 'has_fieldset', $translate->_('common.fieldset'), null),
+			self::VIRTUAL_WATCHERS => new DevblocksSearchField(self::VIRTUAL_WATCHERS, '*', 'workers', $translate->_('common.watchers'), 'WS'),
+			
+			self::CONTEXT_LINK => new DevblocksSearchField(self::CONTEXT_LINK, 'context_link', 'from_context', null),
+			self::CONTEXT_LINK_ID => new DevblocksSearchField(self::CONTEXT_LINK_ID, 'context_link', 'from_context_id', null),
 		);
 		
 		// Sort by label (translation-conscious)
@@ -338,6 +388,9 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 			SearchFields_WgmFreshbooksClient::EMAIL_ID,
 			SearchFields_WgmFreshbooksClient::EMAIL_ORG_ID,
 			SearchFields_WgmFreshbooksClient::ORG_ID,
+			SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK,
+			SearchFields_WgmFreshbooksClient::VIRTUAL_HAS_FIELDSET,
+			SearchFields_WgmFreshbooksClient::VIRTUAL_WATCHERS,
 		));
 		
 		$this->addParamsHidden(array(
@@ -402,6 +455,20 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 			case SearchFields_WgmFreshbooksClient::SYNCHRONIZED:
 				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__date.tpl');
 				break;
+				
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK:
+				$contexts = Extension_DevblocksContext::getAll(false);
+				$tpl->assign('contexts', $contexts);
+				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__context_link.tpl');
+				break;
+				
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_HAS_FIELDSET:
+				$this->_renderCriteriaHasFieldset($tpl, 'wgm.freshbooks.contexts.client');
+				break;
+				
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_WATCHERS:
+				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__context_worker.tpl');
+				break;
 		}
 	}
 
@@ -412,6 +479,26 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 		switch($field) {
 			default:
 				parent::renderCriteriaParam($param);
+				break;
+		}
+	}
+	
+	function renderVirtualCriteria($param) {
+		$key = $param->field;
+		
+		$translate = DevblocksPlatform::getTranslationService();
+		
+		switch($key) {
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK:
+				$this->_renderVirtualContextLinks($param);
+				break;
+				
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_HAS_FIELDSET:
+				$this->_renderVirtualHasFieldset($param);
+				break;
+			
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_WATCHERS:
+				$this->_renderVirtualWatchers($param);
 				break;
 		}
 	}
@@ -443,6 +530,21 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 			case 'placeholder_bool':
 				@$bool = DevblocksPlatform::importGPC($_REQUEST['bool'],'integer',1);
 				$criteria = new DevblocksSearchCriteria($field,$oper,$bool);
+				break;
+				
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK:
+				@$context_links = DevblocksPlatform::importGPC($_REQUEST['context_link'],'array',array());
+				$criteria = new DevblocksSearchCriteria($field,DevblocksSearchCriteria::OPER_IN,$context_links);
+				break;
+				
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_HAS_FIELDSET:
+				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',array());
+				$criteria = new DevblocksSearchCriteria($field,DevblocksSearchCriteria::OPER_IN,$options);
+				break;
+				
+			case SearchFields_WgmFreshbooksClient::VIRTUAL_WATCHERS:
+				@$worker_ids = DevblocksPlatform::importGPC($_REQUEST['worker_id'],'array',array());
+				$criteria = new DevblocksSearchCriteria($field,$oper,$worker_ids);
 				break;
 		}
 
