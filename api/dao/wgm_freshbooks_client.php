@@ -116,6 +116,10 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 		return $objects;
 	}
 	
+	static function random() {
+		return self::_getRandom('wgm_freshbooks_client');
+	}
+	
 	static function delete($ids) {
 		if(!is_array($ids)) $ids = array($ids);
 		$db = DevblocksPlatform::getDatabaseService();
@@ -137,7 +141,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 		if('*'==substr($sortBy,0,1) || !isset($fields[$sortBy]))
 			$sortBy=null;
 
-	    list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy);
+		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy);
 		
 		$select_sql = sprintf("SELECT ".
 			"wgm_freshbooks_client.id as %s, ".
@@ -256,12 +260,11 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 		if($limit > 0) {
 			$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
 		} else {
-		    $rs = $db->Execute($sql) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
-	        $total = mysqli_num_rows($rs);
+			$rs = $db->Execute($sql) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
+			$total = mysqli_num_rows($rs);
 		}
 		
 		$results = array();
-		$total = -1;
 		
 		while($row = mysqli_fetch_assoc($rs)) {
 			$result = array();
@@ -272,13 +275,17 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 			$results[$object_id] = $result;
 		}
 
-		// [JAS]: Count all
+		$total = count($results);
+		
 		if($withCounts) {
-			$count_sql =
-				($has_multiple_values ? "SELECT COUNT(DISTINCT wgm_freshbooks_client.id) " : "SELECT COUNT(wgm_freshbooks_client.id) ").
-				$join_sql.
-				$where_sql;
-			$total = $db->GetOne($count_sql);
+			// We can skip counting if we have a less-than-full single page
+			if(!(0 == $page && $total < $limit)) {
+				$count_sql =
+					($has_multiple_values ? "SELECT COUNT(DISTINCT wgm_freshbooks_client.id) " : "SELECT COUNT(wgm_freshbooks_client.id) ").
+					$join_sql.
+					$where_sql;
+				$total = $db->GetOne($count_sql);
+			}
 		}
 		
 		mysqli_free_result($rs);
@@ -610,7 +617,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 
 class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements IDevblocksContextProfile { //, IDevblocksContextPeek, IDevblocksContextImport
 	function getRandom() {
-		//return DAO_WgmFreshbooksClient::random();
+		return DAO_WgmFreshbooksClient::random();
 	}
 	
 	function profileGetUrl($context_id) {
@@ -679,6 +686,8 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 			$object = DAO_WgmFreshbooksClient::get($object);
 		} elseif($object instanceof Model_WgmFreshbooksClient) {
 			// It's what we want already.
+		} elseif(is_array($object)) {
+			$object = Cerb_ORMHelper::recastArrayToModel($object, 'Model_WgmFreshbooksClient');
 		} else {
 			$object = null;
 		}
@@ -687,6 +696,7 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$token_labels = array(
 			'_label' => $prefix,
 			'balance' => $prefix.$translate->_('dao.wgm_freshbooks_client.balance'),
+			'id' => $prefix.$translate->_('common.id'),
 			'name' => $prefix.$translate->_('dao.wgm_freshbooks_client.account_name'),
 			'updated' => $prefix.$translate->_('common.updated'),
 //			'record_url' => $prefix.$translate->_('common.url.record'),
@@ -696,6 +706,7 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$token_types = array(
 			'_label' => 'context_url',
 			'balance' => Model_CustomField::TYPE_NUMBER,
+			'id' => Model_CustomField::TYPE_NUMBER,
 			'name' => Model_CustomField::TYPE_SINGLE_LINE,
 			'updated' => Model_CustomField::TYPE_DATE,
 //			'record_url' => Model_CustomField::TYPE_URL,
@@ -716,6 +727,9 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 			$token_values['balance'] = $object->balance;
 			$token_values['updated'] = $object->updated;
 
+			// Custom fields
+			$token_values = $this->_importModelCustomFieldsAsValues($object, $token_values);
+			
 			// URL
 // 			$url_writer = DevblocksPlatform::getUrlService();
 // 			$token_values['record_url'] = $url_writer->writeNoProxy(sprintf("c=profiles&type=address&id=%d-%s",$address->id, DevblocksPlatform::strToPermalink($address->email)), true);
