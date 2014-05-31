@@ -949,7 +949,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 
 		CerberusContexts::merge(
 			'client_',
-			'',
+			$prefix,
 			$merge_token_labels,
 			$merge_token_values,
 			$token_labels,
