@@ -55,6 +55,22 @@ class WgmFreshbooksAPI {
 	}
 	
 	/**
+	 * 
+	 * @param string $request_xml
+	 * @return SimpleXMLElement|false
+	 */
+	function requestXML($request_xml) {
+		if(false == ($xml = $this->_execute($request_xml)))
+			return false;
+			
+		if(0 != strcasecmp((string)$xml['status'],'ok')) {
+			return false;
+		}
+		
+		return $xml->asXML();
+	}
+	
+	/**
 	 *
 	 * @param string $method
 	 * @param array $params
@@ -821,6 +837,74 @@ class WgmFreshbooksOrgTab extends Extension_ContextProfileTab {
 			$tpl->display('devblocks:wgm.freshbooks::orgs/exists/tab.tpl');
 		}
 		
+	}
+};
+endif;
+
+if(class_exists('Extension_DevblocksEventAction')):
+class WgmFreshbooks_EventActionApiCall extends Extension_DevblocksEventAction {
+	const ID = 'wgm.freshbooks.event.action.api_call';
+	
+	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
+		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl->assign('params', $params);
+		
+		if(!is_null($seq))
+			$tpl->assign('namePrefix', 'action'.$seq);
+		
+		$tpl->display('devblocks:wgm.freshbooks::events/action_freshbooks_api_call.tpl');
+	}
+	
+	function simulate($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
+		$freshbooks = WgmFreshbooksAPI::getInstance();
+		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
+		
+		$out = null;
+		
+		@$xml = $tpl_builder->build($params['xml'], $dict);
+		@$response_placeholder = $params['response_placeholder'];
+		@$run_in_simulator = $params['run_in_simulator'];
+		
+		if(empty($response_placeholder))
+			return "[ERROR] No result placeholder given.";
+		
+		// Output
+		$out = sprintf(">>> Sending request to Freshbooks API:\n\n%s\n\n",
+			$xml
+		);
+		
+		// Run in simulator?
+		
+		if($run_in_simulator) {
+			$this->run($token, $trigger, $params, $dict);
+			
+			@$xml_response = $dict->$response_placeholder;
+			
+			$out .= sprintf(">>> API response is:\n\n%s\n\n",
+				$xml_response
+			);
+			
+			// Placeholder
+			$out .= sprintf(">>> Saving response to placeholder:\n%s\n",
+				$response_placeholder
+			);
+		}
+		
+		return $out;
+	}
+	
+	function run($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
+		$freshbooks = WgmFreshbooksAPI::getInstance();
+		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
+		
+		@$xml = $tpl_builder->build($params['xml'], $dict);
+		@$response_placeholder = $params['response_placeholder'];
+		
+		if(empty($response_placeholder))
+			return false;
+		
+		$response = $freshbooks->requestXML($xml);
+		$dict->$response_placeholder = $response;
 	}
 };
 endif;
