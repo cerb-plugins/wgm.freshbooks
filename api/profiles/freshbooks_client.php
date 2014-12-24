@@ -46,11 +46,6 @@ class PageSection_ProfilesFreshbooksClient extends Extension_PageSection {
  		}
  		$tpl->assign('selected_tab', $selected_tab);
 		
-		// Custom fields
-		
-// 		$custom_fields = DAO_CustomField::getAll();
-// 		$tpl->assign('custom_fields', $custom_fields);
-		
 		// Properties
 		
 		$properties = array();
@@ -61,19 +56,49 @@ class PageSection_ProfilesFreshbooksClient extends Extension_PageSection {
 // 			'is_closed' => $opp->is_closed,
 // 			'is_won' => $opp->is_won,
 // 		);
-			
-// 		@$values = array_shift(DAO_CustomFieldValue::getValuesByContextIds(CerberusContexts::CONTEXT_OPPORTUNITY, $opp->id)) or array();
+
+		// Custom Fields
+
+		@$values = array_shift(DAO_CustomFieldValue::getValuesByContextIds('wgm.freshbooks.contexts.client', $client->id)) or array();
+		$tpl->assign('custom_field_values', $values);
 		
-// 		foreach($custom_fields as $cf_id => $cfield) {
-// 			if(!isset($values[$cf_id]))
-// 				continue;
+		$properties_cfields = Page_Profiles::getProfilePropertiesCustomFields('wgm.freshbooks.contexts.client', $values);
 		
-// 			$properties['cf_' . $cf_id] = array(
-// 				'label' => $cfield->name,
-// 				'type' => $cfield->type,
-// 				'value' => $values[$cf_id],
-// 			);
-// 		}
+		if(!empty($properties_cfields))
+			$properties = array_merge($properties, $properties_cfields);
+		
+		// Custom Fieldsets
+
+		$properties_custom_fieldsets = Page_Profiles::getProfilePropertiesCustomFieldsets('wgm.freshbooks.contexts.client', $client->id, $values);
+		$tpl->assign('properties_custom_fieldsets', $properties_custom_fieldsets);
+		
+		// Link counts
+		
+		$properties_links = array(
+			'wgm.freshbooks.contexts.client' => array(
+				$client->id => 
+					DAO_ContextLink::getContextLinkCounts(
+						'wgm.freshbooks.contexts.client',
+						$client->id,
+						array(CerberusContexts::CONTEXT_WORKER, CerberusContexts::CONTEXT_CUSTOM_FIELDSET)
+					),
+			),
+		);
+		
+		if(isset($client->org_id)) {
+			$properties_links[CerberusContexts::CONTEXT_ORG] = array(
+				$client->org_id => 
+					DAO_ContextLink::getContextLinkCounts(
+						CerberusContexts::CONTEXT_ORG,
+						$client->org_id,
+						array(CerberusContexts::CONTEXT_WORKER, CerberusContexts::CONTEXT_CUSTOM_FIELDSET)
+					),
+			);
+		}
+		
+		$tpl->assign('properties_links', $properties_links);
+		
+		// Properties
 		
 		$tpl->assign('properties', $properties);
 		
