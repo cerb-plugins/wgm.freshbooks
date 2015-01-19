@@ -37,23 +37,23 @@
 		<tu tuid='dao.wgm_freshbooks_client.data_json'>
 			<tuv xml:lang="en_US"><seg>Data (JSON)</seg></tuv>
 		</tu>
-		<tu tuid='dao.wgm_freshbooks_client.invoice_id'>
-			<tuv xml:lang="en_US"><seg>Invoice ID</seg></tuv>
-		</tu>
 		<tu tuid='dao.wgm_freshbooks_client.synchronized'>
 			<tuv xml:lang="en_US"><seg>Synchronized</seg></tuv>
 		</tu>
 		
 		<!-- Freshbooks Invoice -->
 		
+		<tu tuid='dao.freshbooks_invoice.amount'>
+			<tuv xml:lang="en_US"><seg>Amount</seg></tuv>
+		</tu>
 		<tu tuid='dao.freshbooks_invoice.client_id'>
 			<tuv xml:lang="en_US"><seg>Client</seg></tuv>
 		</tu>
+		<tu tuid='dao.freshbooks_invoice.invoice_id'>
+			<tuv xml:lang="en_US"><seg>Invoice ID</seg></tuv>
+		</tu>
 		<tu tuid='dao.freshbooks_invoice.number'>
 			<tuv xml:lang="en_US"><seg>Number</seg></tuv>
-		</tu>
-		<tu tuid='dao.freshbooks_invoice.amount'>
-			<tuv xml:lang="en_US"><seg>Amount</seg></tuv>
 		</tu>
 		
 	</body>

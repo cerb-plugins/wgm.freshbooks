@@ -409,7 +409,7 @@ class Model_FreshbooksInvoice {
 	public $data_json;
 };
 
-class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Subtotals {
+class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Subtotals, IAbstractView_QuickSearch {
 	const DEFAULT_ID = 'freshbooks_invoice';
 
 	function __construct() {
@@ -538,6 +538,132 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		}
 
 		return $counts;
+	}
+	
+	function getQuickSearchFields() {
+		$fields = array(
+			'_fulltext' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_TEXT,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::CLIENT_ACCOUNT_NAME, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PARTIAL),
+				),
+			'amount' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::AMOUNT),
+				),
+			'client' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_TEXT,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::CLIENT_ACCOUNT_NAME, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PARTIAL),
+				),
+			'client.id' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::CLIENT_ID),
+				),
+			'created' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_DATE,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::CREATED),
+				),
+			'freshbooksId' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::INVOICE_ID),
+				),
+			'id' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::ID),
+				),
+			'number' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::NUMBER),
+				),
+			'status' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_VIRTUAL,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::STATUS),
+					'examples' => array(
+						'draft',
+						'viewed',
+						'pending',
+						'paid',
+						'auto-paid',
+						'disputed',
+						'failed',
+						'paid,auto-paid',
+					),
+				),
+			'updated' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_DATE,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::UPDATED),
+				),
+			'watchers' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_WORKER,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS),
+				),
+		);
+		
+		// Add searchable custom fields
+		
+		$fields = self::_appendFieldsFromQuickSearchContext('wgm.freshbooks.contexts.invoice', $fields, null);
+		$fields = self::_appendFieldsFromQuickSearchContext('wgm.freshbooks.contexts.client', $fields, 'client');
+		
+		// Sort by keys
+		
+		ksort($fields);
+		
+		return $fields;
+	}	
+	
+	function getParamsFromQuickSearchFields($fields) {
+		$search_fields = $this->getQuickSearchFields();
+		$params = DevblocksSearchCriteria::getParamsFromQueryFields($fields, $search_fields);
+
+		// Handle virtual fields and overrides
+		if(is_array($fields))
+		foreach($fields as $k => $v) {
+			switch($k) {
+				case 'status':
+					$field_keys = array(
+						'status' => SearchFields_FreshbooksInvoice::STATUS,
+					);
+					
+					@$field_key = $field_keys[$k];
+					
+					$oper = DevblocksSearchCriteria::OPER_IN;
+					
+					$patterns = DevblocksPlatform::parseCsvString($v);
+					$statuses = DAO_FreshbooksInvoice::getStatuses();
+					$values = array();
+					
+					if(is_array($patterns))
+					foreach($patterns as $pattern) {
+						foreach($statuses as $status_id => $status) {
+							if(false !== stripos($status, $pattern))
+								$values[$status_id] = true;
+						}
+					}
+					
+					$param = new DevblocksSearchCriteria(
+						$field_key,
+						$oper,
+						array_keys($values)
+					);
+					$params[$field_key] = $param;					
+					break;
+			}
+		}
+		
+		$this->renderPage = 0;
+		$this->addParams($params, true);
+		
+		return $params;
 	}
 
 	function render() {

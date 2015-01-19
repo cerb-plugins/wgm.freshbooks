@@ -367,7 +367,7 @@ class Model_WgmFreshbooksClient {
 	public $data; // decoded
 };
 
-class View_WgmFreshbooksClient extends C4_AbstractView {
+class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_QuickSearch {
 	const DEFAULT_ID = 'wgmfreshbooksclient';
 
 	function __construct() {
@@ -425,6 +425,84 @@ class View_WgmFreshbooksClient extends C4_AbstractView {
 
 	function getDataSample($size) {
 		return $this->_doGetDataSample('DAO_WgmFreshbooksClient', $size);
+	}
+	
+	function getQuickSearchFields() {
+		$fields = array(
+			'_fulltext' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_TEXT,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::ACCOUNT_NAME, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PARTIAL),
+				),
+			'balance' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::BALANCE),
+				),
+			'email' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_TEXT,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PREFIX),
+				),
+			'name' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_TEXT,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::ACCOUNT_NAME, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PARTIAL),
+				),
+			'org' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_TEXT,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::ORG_NAME, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PARTIAL),
+				),
+			'id' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::ID),
+				),
+			'synced' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_DATE,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::SYNCHRONIZED),
+				),
+			'updated' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_DATE,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::UPDATED),
+				),
+			'watchers' => 
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_WORKER,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::VIRTUAL_WATCHERS),
+				),
+		);
+		
+		// Add searchable custom fields
+		
+		$fields = self::_appendFieldsFromQuickSearchContext('wgm.freshbooks.contexts.client', $fields, 'org');
+		
+		// Sort by keys
+		
+		ksort($fields);
+		
+		return $fields;
+	}	
+	
+	function getParamsFromQuickSearchFields($fields) {
+		$search_fields = $this->getQuickSearchFields();
+		$params = DevblocksSearchCriteria::getParamsFromQueryFields($fields, $search_fields);
+
+		// Handle virtual fields and overrides
+		if(is_array($fields))
+		foreach($fields as $k => $v) {
+			switch($k) {
+				// ...
+			}
+		}
+		
+		$this->renderPage = 0;
+		$this->addParams($params, true);
+		
+		return $params;
 	}
 
 	function render() {
