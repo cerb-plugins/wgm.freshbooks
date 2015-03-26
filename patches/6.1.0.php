@@ -22,7 +22,7 @@ if(!isset($tables['freshbooks_invoice'])) {
 			INDEX updated (updated)
 		) ENGINE=%s;
 	", APP_DB_ENGINE);
-	$db->Execute($sql);
+	$db->ExecuteMaster($sql);
 	
 	$tables['freshbooks_invoice'] = 'freshbooks_invoice';
 }
@@ -36,7 +36,7 @@ if(!isset($tables['wgm_freshbooks_client']))
 list($columns, $indexes) = $db->metaTable('wgm_freshbooks_client');
 
 if(!isset($columns['balance'])) {
-	$db->Execute("ALTER TABLE wgm_freshbooks_client ADD COLUMN balance DECIMAL(8,2) UNSIGNED NOT NULL DEFAULT 0.00");
+	$db->ExecuteMaster("ALTER TABLE wgm_freshbooks_client ADD COLUMN balance DECIMAL(8,2) UNSIGNED NOT NULL DEFAULT 0.00");
 }
 
 return TRUE;

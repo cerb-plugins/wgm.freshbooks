@@ -14,7 +14,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 		$db = DevblocksPlatform::getDatabaseService();
 
 		$sql = "INSERT INTO freshbooks_invoice () VALUES ()";
-		$db->Execute($sql);
+		$db->ExecuteMaster($sql);
 		$id = $db->LastInsertId();
 
 		self::update($id, $fields);
@@ -85,7 +85,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 			$limit_sql
 			;
 
-		$rs = $db->Execute($sql);
+		$rs = $db->ExecuteSlave($sql);
 
 		return self::_getObjectsFromResult($rs);
 	}
@@ -94,6 +94,9 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	 * @param integer $id
 	 * @return Model_FreshbooksInvoice	 */
 	static function get($id) {
+		if(empty($id))
+			return null;
+		
 		$objects = self::getWhere(sprintf("%s = %d",
 			self::ID,
 			$id
@@ -149,7 +152,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 
 		$ids_list = implode(',', $ids);
 
-		$db->Execute(sprintf("DELETE FROM freshbooks_invoice WHERE id IN (%s)", $ids_list));
+		$db->ExecuteMaster(sprintf("DELETE FROM freshbooks_invoice WHERE id IN (%s)", $ids_list));
 
 		// Fire event
 		$eventMgr = DevblocksPlatform::getEventService();
@@ -296,9 +299,9 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 			;
 				
 		if($limit > 0) {
-			$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
+			$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs mysqli_result */
 		} else {
-			$rs = $db->Execute($sql) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
+			$rs = $db->ExecuteSlave($sql) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs mysqli_result */
 			$total = mysqli_num_rows($rs);
 		}
 
@@ -318,7 +321,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 					($has_multiple_values ? "SELECT COUNT(DISTINCT freshbooks_invoice.id) " : "SELECT COUNT(freshbooks_invoice.id) ").
 					$join_sql.
 					$where_sql;
-				$total = $db->GetOne($count_sql);
+				$total = $db->GetOneSlave($count_sql);
 			}
 		}
 
@@ -1135,7 +1138,6 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		$view->renderFilters = false;
 		$view->renderTemplate = 'contextlinks_chooser';
 
-		C4_AbstractViewLoader::setView($view_id, $view);
 		return $view;
 	}
 
@@ -1160,7 +1162,6 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		$view->addParamsRequired($params_req, true);
 
 		$view->renderTemplate = 'context';
-		C4_AbstractViewLoader::setView($view_id, $view);
 		return $view;
 	}
 };

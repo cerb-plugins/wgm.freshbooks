@@ -23,7 +23,7 @@ if(!isset($tables['wgm_freshbooks_client'])) {
 			INDEX synchronized (synchronized)
 		) ENGINE=%s;
 	", APP_DB_ENGINE);
-	$db->Execute($sql);
+	$db->ExecuteMaster($sql);
 
 	$tables['wgm_freshbooks_client'] = 'wgm_freshbooks_client';
 }

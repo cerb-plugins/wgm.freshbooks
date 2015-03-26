@@ -19,7 +19,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 			return false;
 			
 		$sql = sprintf("INSERT INTO wgm_freshbooks_client (id) VALUES (%d)", $id);
-		$db->Execute($sql);
+		$db->ExecuteMaster($sql);
 		
 		self::update($id, $fields);
 		
@@ -43,7 +43,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 		if(!is_numeric($to_id) || !is_array($from_ids))
 			return false;
 		
-		$db->Execute(sprintf("UPDATE wgm_freshbooks_client SET org_id = %d WHERE org_id IN (%s)",
+		$db->ExecuteMaster(sprintf("UPDATE wgm_freshbooks_client SET org_id = %d WHERE org_id IN (%s)",
 			$to_id,
 			implode(',', $from_ids)
 		));
@@ -68,7 +68,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 			$sort_sql.
 			$limit_sql
 		;
-		$rs = $db->Execute($sql);
+		$rs = $db->ExecuteSlave($sql);
 		
 		return self::_getObjectsFromResult($rs);
 	}
@@ -77,6 +77,9 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	 * @param integer $id
 	 * @return Model_WgmFreshbooksClient	 */
 	static function get($id) {
+		if(empty($id))
+			return null;
+		
 		$objects = self::getWhere(sprintf("%s = %d",
 			self::ID,
 			$id
@@ -129,7 +132,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 		
 		$ids_list = implode(',', $ids);
 		
-		$db->Execute(sprintf("DELETE FROM wgm_freshbooks_client WHERE id IN (%s)", $ids_list));
+		$db->ExecuteMaster(sprintf("DELETE FROM wgm_freshbooks_client WHERE id IN (%s)", $ids_list));
 		
 		return true;
 	}
@@ -258,9 +261,9 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 			$sort_sql;
 			
 		if($limit > 0) {
-			$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
+			$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs mysqli_result */
 		} else {
-			$rs = $db->Execute($sql) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs ADORecordSet */
+			$rs = $db->ExecuteSlave($sql) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs mysqli_result */
 			$total = mysqli_num_rows($rs);
 		}
 		
@@ -280,7 +283,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 					($has_multiple_values ? "SELECT COUNT(DISTINCT wgm_freshbooks_client.id) " : "SELECT COUNT(wgm_freshbooks_client.id) ").
 					$join_sql.
 					$where_sql;
-				$total = $db->GetOne($count_sql);
+				$total = $db->GetOneSlave($count_sql);
 			}
 		}
 		
@@ -292,11 +295,11 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	static function updateBalances() {
 		$db = DevblocksPlatform::getDatabaseService();
 
-		$db->Execute("DROP TABLE IF EXISTS _tmp_balance");
-		$db->Execute("UPDATE wgm_freshbooks_client SET balance = 0.00 WHERE balance > 0");
-		$db->Execute("CREATE TEMPORARY TABLE _tmp_balance SELECT SUM(amount) AS balance, client_id FROM freshbooks_invoice WHERE status NOT IN (1,5,6) GROUP BY client_id");
-		$db->Execute("UPDATE wgm_freshbooks_client INNER JOIN _tmp_balance ON (_tmp_balance.client_id=wgm_freshbooks_client.id) SET wgm_freshbooks_client.balance=_tmp_balance.balance");
-		$db->Execute("DROP TABLE _tmp_balance");
+		$db->ExecuteMaster("DROP TABLE IF EXISTS _tmp_balance");
+		$db->ExecuteMaster("UPDATE wgm_freshbooks_client SET balance = 0.00 WHERE balance > 0");
+		$db->ExecuteMaster("CREATE TEMPORARY TABLE _tmp_balance (PRIMARY KEY (client_id)) SELECT SUM(amount) AS balance, client_id FROM freshbooks_invoice WHERE status NOT IN (1,5,6) GROUP BY client_id");
+		$db->ExecuteMaster("UPDATE wgm_freshbooks_client INNER JOIN _tmp_balance ON (_tmp_balance.client_id=wgm_freshbooks_client.id) SET wgm_freshbooks_client.balance=_tmp_balance.balance");
+		$db->ExecuteMaster("DROP TABLE _tmp_balance");
 	}
 };
 
@@ -884,7 +887,6 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$view->renderFilters = false;
 		$view->renderTemplate = 'contextlinks_chooser';
 		
-		C4_AbstractViewLoader::setView($view_id, $view);
 		return $view;
 	}
 	
@@ -909,7 +911,6 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$view->addParamsRequired($params_req, true);
 		
 		$view->renderTemplate = 'context';
-		C4_AbstractViewLoader::setView($view_id, $view);
 		return $view;
 	}
 };
