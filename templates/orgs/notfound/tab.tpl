@@ -46,7 +46,7 @@
 		</tr>
 	</table>
 	
-	<button type=""><span class="cerb-sprite2 sprite-plus-circle"></span> {'common.add'|devblocks_translate|capitalize}</button>
+	<button type=""><span class="glyphicons glyphicons-circle-plus" style="color:rgb(0,180,0);"></span> {'common.add'|devblocks_translate|capitalize}</button>
 </fieldset>
 
 </form>
