@@ -2,6 +2,7 @@
 <input type="hidden" name="c" value="wgm.freshbooks">
 <input type="hidden" name="a" value="doOrgAddClient">
 <input type="hidden" name="org_id" value="{$org->id}">
+<input type="hidden" name="_csrf_token" value="{$session.csrf_token}">
 
 <fieldset>
 	<legend>{$org->name} wasn't found in Freshbooks...</legend>

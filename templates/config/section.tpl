@@ -5,6 +5,7 @@
 <input type="hidden" name="a" value="handleSectionAction">
 <input type="hidden" name="section" value="freshbooks">
 <input type="hidden" name="action" value="save">
+<input type="hidden" name="_csrf_token" value="{$session.csrf_token}">
 
 <fieldset>
 	<legend>{'wgm.freshbooks.common.api_authentication'|devblocks_translate}</legend>

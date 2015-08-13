@@ -27,6 +27,7 @@
 <input type="hidden" name="c" value="wgm.freshbooks">
 <input type="hidden" name="a" value="">
 <input type="hidden" name="explore_from" value="0">
+<input type="hidden" name="_csrf_token" value="{$session.csrf_token}">
 
 <table cellpadding="3" cellspacing="0" border="0" width="100%" class="worklistBody">
 
