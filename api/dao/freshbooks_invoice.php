@@ -757,7 +757,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 
 				foreach($values as $k) {
 					if(isset($statuses[$k]))
-						$strings[] = $statuses[$k];
+						$strings[] = DevblocksPlatform::strEscapeHtml($statuses[$k]);
 				}
 				
 				echo implode(' or ', $strings);
