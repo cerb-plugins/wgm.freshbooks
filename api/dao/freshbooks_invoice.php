@@ -949,6 +949,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 			'id' => $invoice->id,
 			'name' => sprintf("#%d - %0.2f", $invoice->number, $invoice->amount),
 			'permalink' => $url,
+			'updated' => $invoice->updated,
 		);
 	}
 	

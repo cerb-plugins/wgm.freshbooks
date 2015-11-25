@@ -9,7 +9,7 @@
 	
 	<table cellpadding="2" cellspacing="0" border="0">
 		<tr>
-			<td><b>{'contact_org.name'|devblocks_translate|capitalize}:</b></td>
+			<td><b>{'common.organization'|devblocks_translate|capitalize}:</b></td>
 			<td><input type="text" name="name" value="{$org->name}" size="45"></td>
 		</tr>
 		<tr>
@@ -34,13 +34,13 @@
 			</td>
 		</tr>
 		<tr>
-			<td><b>{'address.first_name'|devblocks_translate|capitalize}</b>:</td>
+			<td><b>{'common.name.first'|devblocks_translate|capitalize}</b>:</td>
 			<td>
 				<input type="text" name="first_name" value="" size="45">
 			</td>
 		</tr>
 		<tr>
-			<td><b>{'address.last_name'|devblocks_translate|capitalize}</b>:</td>
+			<td><b>{'common.name.last'|devblocks_translate|capitalize}</b>:</td>
 			<td>
 				<input type="text" name="last_name" value="" size="45">
 			</td>

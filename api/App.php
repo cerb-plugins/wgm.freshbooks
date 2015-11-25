@@ -582,19 +582,6 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 			foreach($clients as $client_id => $client) { /* @var $client Model_WgmFreshbooksClient */
 				//var_dump($client->data);
 				
-				// Load + compare email info
-				if(!empty($client->email_id) && null != ($address = DAO_Address::get($client->email_id))) {
-					$fields = array();
-					
-					if(!empty($client->data['first_name']))
-						$fields[DAO_Address::FIRST_NAME] = $client->data['first_name'];
-					if(!empty($client->data['last_name']))
-						$fields[DAO_Address::LAST_NAME] = $client->data['last_name'];
-						
-					if(!empty($fields))
-						DAO_Address::update($address->id, $fields);
-				}
-				
 				// Load + compare org info
 				if(!empty($client->org_id) && null != ($org = DAO_ContactOrg::get($client->org_id))) {
 					$fields = array();
