@@ -118,6 +118,9 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	 * @return Model_FreshbooksInvoice[]
 	 */
 	static private function _getObjectsFromResult($rs) {
+		if(!($rs instanceof mysqli_result))
+			return false;
+		
 		$objects = array();
 
 		while($row = mysqli_fetch_assoc($rs)) {
@@ -295,11 +298,16 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 			;
 				
 		if($limit > 0) {
-			$rs = $db->SelectLimit($sql,$limit,$page*$limit) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs mysqli_result */
+			if(false == ($rs = $db->SelectLimit($sql,$limit,$page*$limit)))
+				return false;
 		} else {
-			$rs = $db->ExecuteSlave($sql) or die(__CLASS__ . '('.__LINE__.')'. ':' . $db->ErrorMsg()); /* @var $rs mysqli_result */
+			if(false == ($rs = $db->ExecuteSlave($sql)))
+				return false;
 			$total = mysqli_num_rows($rs);
 		}
+		
+		if(!($rs instanceof mysqli_result))
+			return false;
 
 		$results = array();
 

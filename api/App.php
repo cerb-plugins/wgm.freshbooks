@@ -268,24 +268,24 @@ class WgmFreshbooksHelper {
 }
 
 class WgmFreshbooks_EventListener extends DevblocksEventListenerExtension {
-    /**
-     * @param Model_DevblocksEvent $event
-     */
-    function handleEvent(Model_DevblocksEvent $event) {
-        switch($event->id) {
-            case 'org.merge':
-				$this->_orgMerge($event);
-            	break;
-        }
-    }
-    
-    private function _orgMerge($event) {
-    	@$merge_to_id = $event->params['merge_to_id'];
-    	@$merge_from_ids = $event->params['merge_from_ids'];
-    	
-    	// [TODO] This should merge invoice client_ids too
-    	DAO_WgmFreshbooksClient::mergeOrgIds($merge_from_ids, $merge_to_id);
-    }
+		/**
+		 * @param Model_DevblocksEvent $event
+		 */
+		function handleEvent(Model_DevblocksEvent $event) {
+			switch($event->id) {
+				case 'org.merge':
+					$this->_orgMerge($event);
+					break;
+			}
+		}
+
+		private function _orgMerge($event) {
+			@$merge_to_id = $event->params['merge_to_id'];
+			@$merge_from_ids = $event->params['merge_from_ids'];
+
+			// [TODO] This should merge invoice client_ids too
+			DAO_WgmFreshbooksClient::mergeOrgIds($merge_from_ids, $merge_to_id);
+		}
 }
 
 class WgmFreshbooksController extends DevblocksControllerExtension {

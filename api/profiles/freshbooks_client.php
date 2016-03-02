@@ -42,13 +42,6 @@ class PageSection_ProfilesFreshbooksClient extends Extension_PageSection {
 		
 		$properties = array();
 		
-// 		$properties['status'] = array(
-// 			'label' => ucfirst($translate->_('common.status')),
-// 			'type' => null,
-// 			'is_closed' => $opp->is_closed,
-// 			'is_won' => $opp->is_won,
-// 		);
-
 		// Custom Fields
 
 		@$values = array_shift(DAO_CustomFieldValue::getValuesByContextIds('wgm.freshbooks.contexts.client', $client->id)) or array();
