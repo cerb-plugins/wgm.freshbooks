@@ -175,7 +175,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	public static function getSearchQueryComponents($columns, $params, $sortBy=null, $sortAsc=null) {
 		$fields = SearchFields_FreshbooksInvoice::getFields();
 
-		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy);
+		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy, array(), 'freshbooks_invoice.id');
 
 		$select_sql = sprintf("SELECT ".
 			"freshbooks_invoice.id as %s, ".
