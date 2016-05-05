@@ -29,7 +29,7 @@ class WgmFreshbooksAPI {
 		$api_url = !empty($api_url) ? $api_url : $this->_api_url;
 		$api_token = !empty($api_token) ? $api_token : $this->_api_token;
 		
-		$ch = curl_init();
+		$ch = DevblocksPlatform::curlInit();
 		curl_setopt($ch, CURLOPT_URL, $api_url);
 		curl_setopt($ch, CURLOPT_USERAGENT, 'Cerb ' . APP_VERSION);
 		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
@@ -37,10 +37,9 @@ class WgmFreshbooksAPI {
 		curl_setopt($ch, CURLOPT_HEADER, false);
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		
-		$xml_out = curl_exec($ch);
+		$xml_out = DevblocksPlatform::curlExec($ch);
 		$info = curl_getinfo($ch);
 		curl_close($ch);
 
