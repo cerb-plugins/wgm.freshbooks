@@ -143,7 +143,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	public static function getSearchQueryComponents($columns, $params, $sortBy=null, $sortAsc=null) {
 		$fields = SearchFields_WgmFreshbooksClient::getFields();
 		
-		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy, array(), 'wgm_freshbooks_client.id');
+		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, 'SearchFields_WgmFreshbooksClient', $sortBy);
 		
 		$select_sql = sprintf("SELECT ".
 			"wgm_freshbooks_client.id as %s, ".
@@ -181,7 +181,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 		$where_sql = "".
 			(!empty($wheres) ? sprintf("WHERE %s ",implode(' AND ',$wheres)) : "WHERE 1 ");
 			
-		$sort_sql = self::_buildSortClause($sortBy, $sortAsc, $fields);
+		$sort_sql = self::_buildSortClause($sortBy, $sortAsc, $fields, $select_sql, 'SearchFields_WgmFreshbooksClient');
 	
 		array_walk_recursive(
 			$params,
@@ -219,12 +219,6 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 				$args['has_multiple_values'] = true;
 				self::_searchComponentsVirtualContextLinks($param, $from_context, $from_index, $args['join_sql'], $args['where_sql']);
 				break;
-			/*
-			 case SearchFields_EXAMPLE::VIRTUAL_WATCHERS:
-			$args['has_multiple_values'] = true;
-			self::_searchComponentsVirtualWatchers($param, $from_context, $from_index, $args['join_sql'], $args['where_sql'], $args['tables']);
-			break;
-			*/
 		}
 	}
 	
@@ -307,7 +301,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	}
 };
 
-class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
+class SearchFields_WgmFreshbooksClient extends DevblocksSearchFields {
 	const ID = 'w_id';
 	const ACCOUNT_NAME = 'w_account_name';
 	const EMAIL_ID = 'w_email_id';
@@ -328,10 +322,42 @@ class SearchFields_WgmFreshbooksClient implements IDevblocksSearchFields {
 	const CONTEXT_LINK = 'cl_context_from';
 	const CONTEXT_LINK_ID = 'cl_context_from_id';
 	
+	static private $_fields = null;
+	
+	static function getPrimaryKey() {
+		return 'wgm_freshbooks_client.id';
+	}
+	
+	static function getCustomFieldContextKeys() {
+		return array(
+			'wgm.freshbooks.contexts.client' => new DevblocksSearchFieldContextKeys('wgm_freshbooks_client.id', self::ID),
+			CerberusContexts::CONTEXT_ORG => new DevblocksSearchFieldContextKeys('wgm_freshbooks_client.org_id', self::ORG_ID),
+			CerberusContexts::CONTEXT_ADDRESS => new DevblocksSearchFieldContextKeys('wgm_freshbooks_client.email_id', self::EMAIL_ID),
+		);
+	}
+
+	static function getWhereSQL(DevblocksSearchCriteria $param) {
+		if('cf_' == substr($param->field, 0, 3)) {
+			return self::_getWhereSQLFromCustomFields($param);
+		} else {
+			return $param->getWhereSQL(self::getFields(), self::getPrimaryKey());
+		}
+	}
+	
 	/**
 	 * @return DevblocksSearchField[]
 	 */
 	static function getFields() {
+		if(is_null(self::$_fields))
+			self::$_fields = self::_getFields();
+		
+		return self::$_fields;
+	}
+	
+	/**
+	 * @return DevblocksSearchField[]
+	 */
+	static function _getFields() {
 		$translate = DevblocksPlatform::getTranslationService();
 		
 		$columns = array(
@@ -423,6 +449,9 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 			$this->renderSortAsc,
 			$this->renderTotal
 		);
+		
+		$this->_lazyLoadCustomFieldsIntoObjects($objects, 'SearchFields_WgmFreshbooksClient');
+		
 		return $objects;
 	}
 	
@@ -438,7 +467,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 		$search_fields = SearchFields_WgmFreshbooksClient::getFields();
 		
 		$fields = array(
-			'_fulltext' => 
+			'text' => 
 				array(
 					'type' => DevblocksSearchCriteria::TYPE_TEXT,
 					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::ACCOUNT_NAME, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PARTIAL),
@@ -498,21 +527,17 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 		ksort($fields);
 		
 		return $fields;
-	}	
+	}
 	
-	function getParamsFromQuickSearchFields($fields) {
-		$search_fields = $this->getQuickSearchFields();
-		$params = DevblocksSearchCriteria::getParamsFromQueryFields($fields, $search_fields);
-
-		// Handle virtual fields and overrides
-		if(is_array($fields))
-		foreach($fields as $k => $v) {
-			switch($k) {
-				// ...
-			}
+	function getParamFromQuickSearchFieldTokens($field, $tokens) {
+		switch($field) {
+			default:
+				$search_fields = $this->getQuickSearchFields();
+				return DevblocksSearchCriteria::getParamFromQueryFieldTokens($field, $tokens, $search_fields);
+				break;
 		}
 		
-		return $params;
+		return false;
 	}
 
 	function render() {

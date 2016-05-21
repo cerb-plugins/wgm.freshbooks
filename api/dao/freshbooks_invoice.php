@@ -175,7 +175,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	public static function getSearchQueryComponents($columns, $params, $sortBy=null, $sortAsc=null) {
 		$fields = SearchFields_FreshbooksInvoice::getFields();
 
-		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, $fields, $sortBy, array(), 'freshbooks_invoice.id');
+		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, 'SearchFields_FreshbooksInvoice', $sortBy);
 
 		$select_sql = sprintf("SELECT ".
 			"freshbooks_invoice.id as %s, ".
@@ -205,20 +205,12 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 			(isset($tables['context_link']) ? "INNER JOIN context_link ON (context_link.to_context = 'wgm.freshbooks.contexts.invoice' AND context_link.to_context_id = freshbooks_invoice.id) " : " ")
 			;
 
-		// Custom field joins
-		//list($select_sql, $join_sql, $has_multiple_values) = self::_appendSelectJoinSqlForCustomFieldTables(
-		//	$tables,
-		//	$params,
-		//	'freshbooks_invoice.id',
-		//	$select_sql,
-		//	$join_sql
-		//);
 		$has_multiple_values = false; // [TODO] Temporary when custom fields disabled
 
 		$where_sql = "".
 			(!empty($wheres) ? sprintf("WHERE %s ",implode(' AND ',$wheres)) : "WHERE 1 ");
 			
-		$sort_sql = self::_buildSortClause($sortBy, $sortAsc, $fields);
+		$sort_sql = self::_buildSortClause($sortBy, $sortAsc, $fields, $select_sql, 'SearchFields_FreshbooksInvoice');
 
 		array_walk_recursive(
 			$params,
@@ -256,12 +248,6 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 				$args['has_multiple_values'] = true;
 				self::_searchComponentsVirtualContextLinks($param, $from_context, $from_index, $args['join_sql'], $args['where_sql']);
 				break;
-			/*
-			 case SearchFields_EXAMPLE::VIRTUAL_WATCHERS:
-			$args['has_multiple_values'] = true;
-			self::_searchComponentsVirtualWatchers($param, $from_context, $from_index, $args['join_sql'], $args['where_sql'], $args['tables']);
-			break;
-			*/
 		}
 	}
 
@@ -350,7 +336,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	}
 };
 
-class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
+class SearchFields_FreshbooksInvoice extends DevblocksSearchFields {
 	const ID = 'f_id';
 	const INVOICE_ID = 'f_invoice_id';
 	const CLIENT_ID = 'f_client_id';
@@ -370,10 +356,51 @@ class SearchFields_FreshbooksInvoice implements IDevblocksSearchFields {
 	const CONTEXT_LINK = 'cl_context_from';
 	const CONTEXT_LINK_ID = 'cl_context_from_id';
 
+	static private $_fields = null;
+	
+	static function getPrimaryKey() {
+		return 'freshbooks_invoice.id';
+	}
+	
+	static function getCustomFieldContextKeys() {
+		return array(
+			'wgm.freshbooks.contexts.invoice' => new DevblocksSearchFieldContextKeys('freshbooks_invoice.id', self::ID),
+			'wgm.freshbooks.contexts.client' => new DevblocksSearchFieldContextKeys('freshbooks_invoice.client_id', self::CLIENT_ID),
+		);
+	}
+	
+	static function getWhereSQL(DevblocksSearchCriteria $param) {
+		switch($param->field) {
+			case self::VIRTUAL_WATCHERS:
+				return self::_getWhereSQLFromWatchersField($param, 'wgm.freshbooks.contexts.invoice', self::getPrimaryKey());
+				break;
+				
+			default:
+				if('cf_' == substr($param->field, 0, 3)) {
+					return self::_getWhereSQLFromCustomFields($param);
+				} else {
+					return $param->getWhereSQL(self::getFields(), self::getPrimaryKey());
+				}
+				break;
+		}
+		
+		return false;
+	}
+	
 	/**
 	 * @return DevblocksSearchField[]
 	 */
 	static function getFields() {
+		if(is_null(self::$_fields))
+			self::$_fields = self::_getFields();
+		
+		return self::$_fields;
+	}
+	
+	/**
+	 * @return DevblocksSearchField[]
+	 */
+	static function _getFields() {
 		$translate = DevblocksPlatform::getTranslationService();
 
 		$columns = array(
@@ -463,6 +490,9 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			$this->renderSortAsc,
 			$this->renderTotal
 		);
+		
+		$this->_lazyLoadCustomFieldsIntoObjects($objects, 'SearchFields_FreshbooksInvoice');
+		
 		return $objects;
 	}
 
@@ -551,7 +581,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		$search_fields = SearchFields_FreshbooksInvoice::getFields();
 		
 		$fields = array(
-			'_fulltext' => 
+			'text' => 
 				array(
 					'type' => DevblocksSearchCriteria::TYPE_TEXT,
 					'options' => array('param_key' => SearchFields_FreshbooksInvoice::CLIENT_ACCOUNT_NAME, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PARTIAL),
@@ -576,7 +606,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 					'type' => DevblocksSearchCriteria::TYPE_DATE,
 					'options' => array('param_key' => SearchFields_FreshbooksInvoice::CREATED),
 				),
-			'freshbooksId' => 
+			'freshbooks.id' => 
 				array(
 					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
 					'options' => array('param_key' => SearchFields_FreshbooksInvoice::INVOICE_ID),
@@ -603,7 +633,8 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 						'auto-paid',
 						'disputed',
 						'failed',
-						'paid,auto-paid',
+						'[paid,auto-paid]',
+						'![paid]',
 					),
 				),
 			'updated' => 
@@ -632,50 +663,48 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		ksort($fields);
 		
 		return $fields;
-	}	
+	}
 	
-	function getParamsFromQuickSearchFields($fields) {
-		$search_fields = $this->getQuickSearchFields();
-		$params = DevblocksSearchCriteria::getParamsFromQueryFields($fields, $search_fields);
-
-		// Handle virtual fields and overrides
-		if(is_array($fields))
-		foreach($fields as $k => $v) {
-			switch($k) {
-				case 'status':
-					$field_keys = array(
-						'status' => SearchFields_FreshbooksInvoice::STATUS,
-					);
-					
-					@$field_key = $field_keys[$k];
-					
-					$oper = DevblocksSearchCriteria::OPER_IN;
-					
-					$patterns = DevblocksPlatform::parseCsvString($v);
-					$statuses = DAO_FreshbooksInvoice::getStatuses();
-					$values = array();
-					
-					if(is_array($patterns))
-					foreach($patterns as $pattern) {
-						foreach($statuses as $status_id => $status) {
-							if(false !== stripos($status, $pattern))
-								$values[$status_id] = true;
-						}
+	function getParamFromQuickSearchFieldTokens($field, $tokens) {
+		switch($field) {
+			case 'status':
+				$field_key = SearchFields_FreshbooksInvoice::STATUS;
+				$oper = null;
+				$patterns = array();
+				
+				CerbQuickSearchLexer::getOperArrayFromTokens($tokens, $oper, $patterns);
+				
+				$statuses = DAO_FreshbooksInvoice::getStatuses();
+				$values = array();
+				
+				if(is_array($patterns))
+				foreach($patterns as $pattern) {
+					foreach($statuses as $status_id => $status) {
+						if(false !== stripos($status, $pattern))
+							$values[$status_id] = true;
 					}
-					
-					$param = new DevblocksSearchCriteria(
-						$field_key,
-						$oper,
-						array_keys($values)
-					);
-					$params[$field_key] = $param;
-					break;
-			}
+				}
+				
+				return new DevblocksSearchCriteria(
+					$field_key,
+					$oper,
+					array_keys($values)
+				);
+				break;
+		
+			case 'watchers':
+				return DevblocksSearchCriteria::getWatcherParamFromTokens(SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS, $tokens);
+				break;
+				
+			default:
+				$search_fields = $this->getQuickSearchFields();
+				return DevblocksSearchCriteria::getParamFromQueryFieldTokens($field, $tokens, $search_fields);
+				break;
 		}
 		
-		return $params;
+		return false;
 	}
-
+	
 	function render() {
 		$this->_sanitize();
 
