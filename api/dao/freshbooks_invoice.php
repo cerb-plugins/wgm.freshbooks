@@ -543,6 +543,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	function getSubtotalCounts($column) {
 		$counts = array();
 		$fields = $this->getFields();
+		$context = 'wgm.freshbooks.contexts.invoice';
 
 		if(!isset($fields[$column]))
 			return array();
@@ -550,25 +551,25 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		switch($column) {
 			case SearchFields_FreshbooksInvoice::STATUS:
 				$label_map = DAO_FreshbooksInvoice::getStatuses();
-				$counts = $this->_getSubtotalCountForStringColumn('DAO_FreshbooksInvoice', $column, $label_map, 'in', 'options[]');
+				$counts = $this->_getSubtotalCountForStringColumn($context, $column, $label_map, 'in', 'options[]');
 				break;
 			
 			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
-				$counts = $this->_getSubtotalCountForContextLinkColumn('DAO_FreshbooksInvoice', 'wgm.freshbooks.contexts.invoice', $column);
+				$counts = $this->_getSubtotalCountForContextLinkColumn($context, $column);
 				break;
 
 			case SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET:
-				$counts = $this->_getSubtotalCountForHasFieldsetColumn('DAO_FreshbooksInvoice', 'wgm.freshbooks.contexts.invoice', $column);
+				$counts = $this->_getSubtotalCountForHasFieldsetColumn($context, $column);
 				break;
 				
 			case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
-				$counts = $this->_getSubtotalCountForWatcherColumn('DAO_FreshbooksInvoice', $column);
+				$counts = $this->_getSubtotalCountForWatcherColumn($context, $column);
 				break;
 				
 			default:
 				// Custom fields
 				if('cf_' == substr($column,0,3)) {
-					$counts = $this->_getSubtotalCountForCustomColumn('DAO_FreshbooksInvoice', $column, 'freshbooks_invoice.id');
+					$counts = $this->_getSubtotalCountForCustomColumn($context, $column);
 				}
 
 				break;
