@@ -176,7 +176,7 @@ class WgmFreshbooksHelper {
 			
 		} else {
 			$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
-			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+			$date->setTimezone(new DateTimeZone(DevblocksPlatform::getTimezone()));
 			$updated = strtotime($date->format('Y-m-d H:i:s'));
 		}
 		
@@ -232,7 +232,7 @@ class WgmFreshbooksHelper {
 			
 		} else {
 			$date = new DateTime($updated_str, new DateTimeZone('America/New_York'));
-			$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+			$date->setTimezone(new DateTimeZone(DevblocksPlatform::getTimezone()));
 			$updated = strtotime($date->format('Y-m-d H:i:s'));
 		}
 	
