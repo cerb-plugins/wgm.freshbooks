@@ -1015,7 +1015,6 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		return $labels;
 	}
 	
-	// [TODO] Interface
 	function getDefaultProperties() {
 		return array(
 			'client__label',

@@ -777,7 +777,6 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		return $labels;
 	}
 	
-	// [TODO] Interface
 	function getDefaultProperties() {
 		return array(
 			'balance',
