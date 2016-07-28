@@ -1,7 +1,7 @@
 {$view_fields = $view->getColumnsAvailable()}
-{assign var=results value=$view->getData()}
-{assign var=total value=$results[1]}
-{assign var=data value=$results[0]}
+{$results = $view->getData()}
+{$total = $results[1]}
+{$data = $results[0]}
 
 <table cellpadding="0" cellspacing="0" border="0" class="worklist" width="100%">
 	<tr>
@@ -56,15 +56,14 @@
 	{foreach from=$data item=result key=idx name=results}
 
 	{if $smarty.foreach.results.iteration % 2}
-		{assign var=tableRowClass value="even"}
-
+		{$tableRowClass = "even"}
 	{else}
-		{assign var=tableRowClass value="odd"}
+		{$tableRowClass = "odd"}
 	{/if}
 
 	<tbody style="cursor:pointer;">
 		<tr class="{$tableRowClass}">
-			<td colspan="{$smarty.foreach.headers.total}">
+			<td data-column="label" colspan="{$smarty.foreach.headers.total}">
 				<input type="checkbox" name="row_id[]" value="{$result.f_id}" style="display:none;">
 				<b class="subject">#{$result.f_number|number_format:0:'':''} - {$result.fc_account_name}</b>
 				{*<a href="{devblocks_url}c=example.objects&p=profile&id={$result.w_id}{/devblocks_url}" class="subject">{$result.w_name}</a>*} 
@@ -77,26 +76,26 @@
 			{if substr($column,0,3)=="cf_"}
 				{include file="devblocks:cerberusweb.core::internal/custom_fields/view/cell_renderer.tpl"}
 			{elseif $column=="f_updated" || $column=="f_created"}
-				<td title="{$result.$column|devblocks_date}">
+				<td data-column="{$column}" title="{$result.$column|devblocks_date}">
 					{if !empty($result.$column)}
 						{$result.$column|devblocks_prettytime}&nbsp;
 					{/if}
 				</td>
 			{elseif $column=="f_amount"}
-				<td>{$result.$column|number_format:2}</td>
+				<td data-column="{$column}">{$result.$column|number_format:2}</td>
 			{elseif $column=="f_number"}
-				<td>{$result.$column|number_format:0:'':''}</td>
+				<td data-column="{$column}">{$result.$column|number_format:0:'':''}</td>
 			{elseif $column=="f_status"}
-				<td>
+				<td data-column="{$column}">
 					{$status_id = $result.$column}
 					{if isset($statuses.$status_id)}
 						{$statuses.$status_id}
 					{/if}
 				</td>
 			{elseif $column=="f_client_id"}
-				<td><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context=wgm.freshbooks.contexts.clients&context_id={$result.f_client_id}&view_id={$view->id}',null,false,'550');">{$result.$column}</a></td>
+				<td data-column="{$column}"><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context=wgm.freshbooks.contexts.clients&context_id={$result.f_client_id}&view_id={$view->id}',null,false,'550');">{$result.$column}</a></td>
 			{else}
-				<td>{$result.$column}</td>
+				<td data-column="{$column}">{$result.$column}</td>
 			{/if}
 		{/foreach}
 		</tr>
