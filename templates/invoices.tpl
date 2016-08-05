@@ -93,7 +93,7 @@
 					{/if}
 				</td>
 			{elseif $column=="f_client_id"}
-				<td data-column="{$column}"><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context=wgm.freshbooks.contexts.clients&context_id={$result.f_client_id}&view_id={$view->id}',null,false,'550');">{$result.$column}</a></td>
+				<td data-column="{$column}"><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context=wgm.freshbooks.contexts.clients&context_id={$result.f_client_id}&view_id={$view->id}',null,false,'50%');">{$result.$column}</a></td>
 			{else}
 				<td data-column="{$column}">{$result.$column}</td>
 			{/if}

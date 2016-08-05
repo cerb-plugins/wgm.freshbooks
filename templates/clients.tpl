@@ -79,7 +79,7 @@
 					{/if}
 				</td>
 			{elseif $column=="a_email"}
-				<td data-column="{$column}"><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context={CerberusContexts::CONTEXT_ADDRESS}&context_id={$result.w_email_id}&view_id={$view->id}',null,false,'550');">{$result.$column}</a></td>
+				<td data-column="{$column}"><a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context={CerberusContexts::CONTEXT_ADDRESS}&context_id={$result.w_email_id}&view_id={$view->id}',null,false,'50%');">{$result.$column}</a></td>
 			{elseif $column=="o_name"}
 				<td data-column="{$column}">
 					{if empty($result.$column)}
