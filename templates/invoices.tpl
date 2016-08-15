@@ -67,7 +67,7 @@
 				<input type="checkbox" name="row_id[]" value="{$result.f_id}" style="display:none;">
 				<b class="subject">#{$result.f_number|number_format:0:'':''} - {$result.fc_account_name}</b>
 				{*<a href="{devblocks_url}c=example.objects&p=profile&id={$result.w_id}{/devblocks_url}" class="subject">{$result.w_name}</a>*} 
-				{*<a href="javascript:;" onclick="genericAjaxPopup('peek','c=example.objects&a=showEntryPopup&id={$result.w_id}&view_id={$view->id}',null,false,'500');"><span class="ui-icon ui-icon-newwin" style="display:inline-block;vertical-align:middle;" title="{'views.peek'|devblocks_translate}"></span></a>*}
+				{*<a href="javascript:;" onclick="genericAjaxPopup('peek','c=example.objects&a=showEntryPopup&id={$result.w_id}&view_id={$view->id}',null,false,'50%');"><span class="ui-icon ui-icon-newwin" style="display:inline-block;vertical-align:middle;" title="{'views.peek'|devblocks_translate}"></span></a>*}
 			</td>
 		</tr>
 

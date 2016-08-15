@@ -64,7 +64,7 @@
 				<input type="checkbox" name="row_id[]" value="{$result.w_id}" style="display:none;">
 				<b class="subject">{$result.w_account_name}</b>
 				{*<a href="{devblocks_url}c=example.objects&p=profile&id={$result.w_id}{/devblocks_url}" class="subject">{$result.w_name}</a>*} 
-				{*<a href="javascript:;" onclick="genericAjaxPopup('peek','c=example.objects&a=showEntryPopup&id={$result.w_id}&view_id={$view->id}',null,false,'500');"><span class="ui-icon ui-icon-newwin" style="display:inline-block;vertical-align:middle;" title="{'views.peek'|devblocks_translate}"></span></a>*}
+				{*<a href="javascript:;" onclick="genericAjaxPopup('peek','c=example.objects&a=showEntryPopup&id={$result.w_id}&view_id={$view->id}',null,false,'50%');"><span class="ui-icon ui-icon-newwin" style="display:inline-block;vertical-align:middle;" title="{'views.peek'|devblocks_translate}"></span></a>*}
 			</td>
 		</tr>
 		
@@ -93,7 +93,7 @@
 						<input type="text" name="org_lookup[]" size="32" value="{if !empty($org)}{$org->name}{/if}" class="autocomplete_org input_search">
 						<div class="badge badge-lightgray"><a href="javascript:;" style="text-decoration:none;" onclick="$(this).parent().siblings('INPUT.autocomplete_org').val('{$result.w_account_name|replace:"'":"\\'"}');">Add new organization</a></div>
 					{else}
-						<a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context={CerberusContexts::CONTEXT_ORG}&context_id={$result.w_org_id}&view_id={$view->id}',null,false,'600');">{$result.$column}</a>
+						<a href="javascript:;" onclick="genericAjaxPopup('peek','c=internal&a=showPeekPopup&context={CerberusContexts::CONTEXT_ORG}&context_id={$result.w_org_id}&view_id={$view->id}',null,false,'50%');">{$result.$column}</a>
 					{/if}
 				</td>
 			{else}
