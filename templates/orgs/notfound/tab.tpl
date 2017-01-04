@@ -47,11 +47,13 @@
 		</tr>
 	</table>
 	
-	<button type=""><span class="glyphicons glyphicons-circle-plus" style="color:rgb(0,180,0);"></span> {'common.add'|devblocks_translate|capitalize}</button>
+	<button type="submit"><span class="glyphicons glyphicons-circle-plus" style="color:rgb(0,180,0);"></span> {'common.add'|devblocks_translate|capitalize}</button>
 </fieldset>
 
 </form>
 
 <script type="text/javascript">
+$(function() {
 	ajax.emailAutoComplete('#frmOrgFreshbooksClient input[name=email]');
+});
 </script>

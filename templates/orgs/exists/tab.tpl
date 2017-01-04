@@ -1,7 +1,7 @@
 <fieldset>
-	<legend>Freshbooks</legend>
+	<legend>Freshbooks Client</legend>
 	
-	<b>{'dao.wgm_freshbooks_client.client_id'|devblocks_translate}:</b> 
+	<b>{'common.id'|devblocks_translate}:</b> 
 	{$client->id}
 	<br>
 	

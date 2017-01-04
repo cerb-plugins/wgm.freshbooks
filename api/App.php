@@ -1,48 +1,36 @@
 <?php
 class WgmFreshbooksAPI {
-	private static $_instance = null;
-	private $_api_url = null;
-	private $_api_token = null;
+	const API_PATH = 'api/2.1/xml-in';
+	const REQUEST_TOKEN_PATH = 'oauth/oauth_request.php';
+	const AUTHORIZATION_PATH = 'oauth/oauth_authorize.php';
+	const ACCESS_TOKEN_PATH = 'oauth/oauth_access.php';
 	
-	private function __construct() {
-		$api_url = DevblocksPlatform::getPluginSetting('wgm.freshbooks','api_url','');
-		$api_token = DevblocksPlatform::getPluginSetting('wgm.freshbooks','api_token','');
+	private $_base_api_url = null;
+	private $_oauth_token = null;
+	private $_oauth_token_secret = null;
+	
+	private $_oauth = null;
+	
+	public function __construct() {
+		if(false == ($credentials = DevblocksPlatform::getPluginSetting('wgm.freshbooks','credentials',false,true,true)))
+			return;
 		
-		if(!empty($api_url) && !empty($api_token)) {
-			$this->_api_url = $api_url;
-			$this->_api_token = $api_token;
-		}
+		@$consumer_key = @$credentials['consumer_key'];
+		@$consumer_secret = @$credentials['consumer_secret'];
+		
+		$this->_oauth = DevblocksPlatform::getOAuthService($consumer_key, $consumer_secret, 'PLAINTEXT');
+		
+		$this->_base_api_url = sprintf("https://%s.freshbooks.com/%s", $consumer_key, self::API_PATH);
 	}
 	
-	/**
-	 * @return WgmFreshbooksAPI
-	 */
-	static function getInstance() {
-		if(null == self::$_instance) {
-			self::$_instance = new WgmFreshbooksAPI();
-		}
-		
-		return self::$_instance;
+	public function setTokens($token, $token_secret=null) {
+		return $this->_oauth->setTokens($token, $token_secret);
 	}
-
-	private function _execute($request, $api_url=null, $api_token=null) {
-		$api_url = !empty($api_url) ? $api_url : $this->_api_url;
-		$api_token = !empty($api_token) ? $api_token : $this->_api_token;
+	
+	private function _execute($request) {
+		$xml_out = $this->_oauth->executeRequest('POST', $this->_base_api_url, $request);
+		$info = $this->_oauth->getResponseInfo();
 		
-		$ch = DevblocksPlatform::curlInit();
-		curl_setopt($ch, CURLOPT_URL, $api_url);
-		curl_setopt($ch, CURLOPT_USERAGENT, 'Cerb ' . APP_VERSION);
-		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_setopt($ch, CURLOPT_USERPWD, $api_token.':X');
-		curl_setopt($ch, CURLOPT_HEADER, false);
-		curl_setopt($ch, CURLOPT_POST, true);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		
-		$xml_out = DevblocksPlatform::curlExec($ch);
-		$info = curl_getinfo($ch);
-		curl_close($ch);
-
 		// Check HTTP status code
 		if(200 != intval($info['http_code']))
 			return false;
@@ -131,25 +119,18 @@ class WgmFreshbooksAPI {
 		return $xml;
 	}
 	
-	function testAuthentication($api_url, $api_token) {
-		$request = <<< EOF
-<?xml version="1.0" encoding="utf-8"?>
-<request method="staff.current">
-</request>
-EOF;
-
-		if(false == ($xml = $this->_execute($request, $api_url, $api_token)))
+	function getStaffCurrent() {
+		if(false == ($xml = $this->request('staff.current')))
 			return false;
 			
 		if(0 != strcasecmp((string)$xml['status'],'ok'))
 			return false;
-
-		@$username = (string) $xml->staff->username;
 		
-		if(empty($username))
-			return false;
-		
-		return $username;
+		return $xml;
+	}
+	
+	public function authenticateHttpRequest(&$ch, &$verb, &$url, &$body, &$headers) {
+		return $this->_oauth->authenticateHttpRequest($ch, $verb, $url, $body, $headers);
 	}
 }
 
@@ -302,30 +283,53 @@ class WgmFreshbooksController extends DevblocksControllerExtension {
 		$stack = $request->path;
 		array_shift($stack); // example
 		
-	    @$action = array_shift($stack) . 'Action';
+		@$action = array_shift($stack) . 'Action';
 
-	    switch($action) {
-	        case NULL:
-	            // [TODO] Index/page render
-	            break;
-	            
-	        default:
-			    // Default action, call arg as a method suffixed with Action
+		switch($action) {
+			case NULL:
+				// [TODO] Index/page render
+				break;
+				
+			default:
+				// Default action, call arg as a method suffixed with Action
 				if(method_exists($this,$action)) {
 					call_user_func(array(&$this, $action));
 				}
-	            break;
-	    }
-	    
-	    exit;
+				break;
+		}
+		
+		exit;
 	}
 
 	function writeResponse(DevblocksHttpResponse $response) {
 		return;
 	}
 	
+	private function _getFreshbooksApi() {
+		if(0 == ($sync_account_id = DevblocksPlatform::getPluginSetting('wgm.freshbooks', 'sync_account_id', 0)))
+			return false;
+		
+		if(false == ($connected_account = DAO_ConnectedAccount::get($sync_account_id)))
+			return false;
+		
+		if($connected_account->extension_id != ServiceProvider_Freshbooks::ID)
+			return false;
+		
+		if(false == ($params = $connected_account->decryptParams()))
+			return false;
+		
+		if(!isset($params['oauth_token']) || !isset($params['oauth_token_secret']))
+			return false;
+		
+		$freshbooks = new WgmFreshbooksAPI();
+		$freshbooks->setTokens($params['oauth_token'], $params['oauth_token_secret']);
+		
+		return $freshbooks;
+	}
+	
 	function invoicesAction() {
-		$freshbooks = WgmFreshbooksAPI::getInstance();
+		if(false == ($freshbooks = $this->_getFreshbooksApi()))
+			return false;
 
 		$params = array(
 			//'updated_from' => '2000-01-01 00:00:00',
@@ -356,7 +360,8 @@ class WgmFreshbooksController extends DevblocksControllerExtension {
 	
 	/*
 	function getClientsListAction() {
-		$freshbooks = WgmFreshbooksAPI::getInstance();
+		if(false == ($freshbooks = $this->_getFreshbooksApi()))
+			return false;
 		
 		$params = array(
 			'updated_from' => '2000-01-01 00:00:00',
@@ -396,8 +401,9 @@ class WgmFreshbooksController extends DevblocksControllerExtension {
 		@$first_name = DevblocksPlatform::importGPC($_POST['first_name'],'string','');
 		@$last_name = DevblocksPlatform::importGPC($_POST['last_name'],'string','');
 		
-		$freshbooks = WgmFreshbooksAPI::getInstance();
-
+		if(false == ($freshbooks = $this->_getFreshbooksApi()))
+			return false;
+		
 		// Add to Freshbooks through API
 		$params = array(
 			'first_name' => $first_name,
@@ -484,52 +490,46 @@ class WgmFreshbooks_SetupPageSection extends Extension_PageSection {
 	function render() {
 		$tpl = DevblocksPlatform::getTemplateService();
 
-		$params = array();
-		$params['api_url'] = DevblocksPlatform::getPluginSetting('wgm.freshbooks','api_url','');
-		$params['api_token'] = DevblocksPlatform::getPluginSetting('wgm.freshbooks','api_token','');
-		$tpl->assign('params', $params);
+		$visit = CerberusApplication::getVisit();
+		$visit->set(ChConfigurationPage::ID, 'freshbooks');
 		
-		$tpl->display('devblocks:wgm.freshbooks::config/section.tpl');
-	}
-	
-	function saveAction() {
-		try {
-			@$api_url = DevblocksPlatform::importGPC($_POST['api_url'],'string','');
-			@$api_token = DevblocksPlatform::importGPC($_POST['api_token'],'string','');
-	
-			DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_url',$api_url);
-			DevblocksPlatform::setPluginSetting('wgm.freshbooks','api_token',$api_token);
-				
-		    echo json_encode(array('status'=>true, 'message'=>'Saved!'));
-		    return;
-			
-		} catch(Exception $e) {
-			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
-			return;
+		$credentials = DevblocksPlatform::getPluginSetting('wgm.freshbooks','credentials',false,true,true);
+		$tpl->assign('credentials', $credentials);
+		
+		$sync_account_id = DevblocksPlatform::getPluginSetting('wgm.freshbooks','sync_account_id',0);
+		
+		if(!empty($sync_account_id)) {
+			if(false != ($sync_account = DAO_ConnectedAccount::get($sync_account_id)))
+				$tpl->assign('sync_account', $sync_account);
 		}
 		
+		$tpl->display('devblocks:wgm.freshbooks::config/index.tpl');
 	}
-
-	function testAuthenticationAction() {
-		try {
-			@$api_url = DevblocksPlatform::importGPC($_POST['api_url'],'string','');
-			@$api_token = DevblocksPlatform::importGPC($_POST['api_token'],'string','');
 	
-			$freshbooks = WgmFreshbooksAPI::getInstance();
+	function saveJsonAction() {
+		try {
+			@$consumer_key = DevblocksPlatform::importGPC($_REQUEST['consumer_key'],'string','');
+			@$consumer_secret = DevblocksPlatform::importGPC($_REQUEST['consumer_secret'],'string','');
+			@$sync_account_id = DevblocksPlatform::importGPC($_REQUEST['sync_account_id'],'integer',0);
 			
-			// Test credentials
-			$username = $freshbooks->testAuthentication($api_url, $api_token);
+			if(empty($consumer_key) || empty($consumer_secret))
+				throw new Exception("Both the 'Client ID' and 'Client Secret' are required.");
 			
-			if(!empty($username))
-				$message = 'Success! Logged in as ' . $username;
-			else
-				throw new Exception('Authentication failed!');
-				
-		    echo json_encode(array('status'=>true, 'message'=>$message));
-		    return;
+			$credentials = [
+				'consumer_key' => $consumer_key,
+				'consumer_secret' => $consumer_secret,
+			];
+			DevblocksPlatform::setPluginSetting('wgm.freshbooks', 'credentials', $credentials, true, true);
 			
-		} catch(Exception $e) {
-			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
+			DevblocksPlatform::setPluginSetting('wgm.freshbooks', 'sync_account_id', $sync_account_id);
+			
+			// [TODO] Test the credentials?
+			
+			echo json_encode(array('status'=>true, 'message'=>'Saved!'));
+			return;
+			
+		} catch (Exception $e) {
+			echo json_encode(array('status'=>false, 'error'=>$e->getMessage()));
 			return;
 		}
 	}
@@ -551,18 +551,42 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
 		$logger->info("Started");
 		
-		$this->_downloadClients();
+		if(false == ($sync_account_id = DevblocksPlatform::getPluginSetting('wgm.freshbooks', 'sync_account_id', 0))) {
+			$logger->info("No sync account is configured. Skipping...");
+			return false;
+		}
 		
-		$this->_synchronizeClients();
+		if(false == ($connected_account = DAO_ConnectedAccount::get($sync_account_id))) {
+			$logger->info("Invalid sync account (not found).");
+			return false;
+		}
 		
-		$this->_downloadInvoices();
+		if($connected_account->extension_id != ServiceProvider_Freshbooks::ID) {
+			$logger->info("Invalid sync account (wrong service provider).");
+			return false;
+		}
+		
+		$params = $connected_account->decryptParams();
+		
+		if(!isset($params['oauth_token']) || !isset($params['oauth_token_secret'])) {
+			$logger->info("Invalid OAuth tokens on sync account.");
+			return false;
+		}
+		
+		$freshbooks = new WgmFreshbooksAPI();
+		$freshbooks->setTokens($params['oauth_token'], $params['oauth_token_secret']);
+		
+		$this->_downloadClients($freshbooks);
+		
+		$this->_synchronizeClients($freshbooks);
+		
+		$this->_downloadInvoices($freshbooks);
 		
 		$logger->info("Finished");
 	}
 	
-	private function _synchronizeClients() {
+	private function _synchronizeClients(WgmFreshbooksAPI $freshbooks) {
 		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
-		$freshbooks = WgmFreshbooksAPI::getInstance();
 		
 		// Retrieve clients that have changed since their sync date with org_id != 0
 		$loops = 0;
@@ -623,9 +647,8 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		$logger->info(sprintf("Synchronized %d local client records", $synched));
 	}
 	
-	private function _downloadClients() {
+	private function _downloadClients(WgmFreshbooksAPI $freshbooks) {
 		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
-		$freshbooks = WgmFreshbooksAPI::getInstance();
 		
 		$updated_from_timestamp = $this->getParam('clients.updated_from', 0);
 		
@@ -684,9 +707,8 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		$this->setParam('clients.updated_from', $updated_from_timestamp);
 	}
 	
-	private function _downloadInvoices() {
+	private function _downloadInvoices(WgmFreshbooksAPI $freshbooks) {
 		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
-		$freshbooks = WgmFreshbooksAPI::getInstance();
 	
 		$updated_from_timestamp = $this->getParam('invoices.updated_from', 0);
 	
@@ -781,7 +803,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	}
 };
 
-if (class_exists('Extension_ContextProfileTab')):
+if(class_exists('Extension_ContextProfileTab')):
 class WgmFreshbooksOrgTab extends Extension_ContextProfileTab {
 	function showTab($context, $context_id) {
 		if(0 != strcasecmp($context, CerberusContexts::CONTEXT_ORG))
@@ -827,70 +849,137 @@ class WgmFreshbooksOrgTab extends Extension_ContextProfileTab {
 };
 endif;
 
-if(class_exists('Extension_DevblocksEventAction')):
-class WgmFreshbooks_EventActionApiCall extends Extension_DevblocksEventAction {
-	const ID = 'wgm.freshbooks.event.action.api_call';
-	
-	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
-		$tpl = DevblocksPlatform::getTemplateService();
-		$tpl->assign('params', $params);
+class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IServiceProvider_OAuth, IServiceProvider_HttpRequestSigner {
+	const ID = 'wgm.freshbooks.service.provider';
+
+	private function _getAppKeys() {
+		if(false == ($credentials = DevblocksPlatform::getPluginSetting('wgm.freshbooks','credentials',false,true,true)))
+			return;
 		
-		if(!is_null($seq))
-			$tpl->assign('namePrefix', 'action'.$seq);
+		@$consumer_key = $credentials['consumer_key'];
+		@$consumer_secret = $credentials['consumer_secret'];
 		
-		$tpl->display('devblocks:wgm.freshbooks::events/action_freshbooks_api_call.tpl');
-	}
-	
-	function simulate($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
-		$freshbooks = WgmFreshbooksAPI::getInstance();
-		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
-		
-		$out = null;
-		
-		@$xml = $tpl_builder->build($params['xml'], $dict);
-		@$response_placeholder = $params['response_placeholder'];
-		@$run_in_simulator = $params['run_in_simulator'];
-		
-		if(empty($response_placeholder))
-			return "[ERROR] No result placeholder given.";
-		
-		// Output
-		$out = sprintf(">>> Sending request to Freshbooks API:\n\n%s\n\n",
-			$xml
-		);
-		
-		// Run in simulator?
-		
-		if($run_in_simulator) {
-			$this->run($token, $trigger, $params, $dict);
-			
-			@$xml_response = $dict->$response_placeholder;
-			
-			$out .= sprintf(">>> API response is:\n\n%s\n\n",
-				$xml_response
-			);
-			
-			// Placeholder
-			$out .= sprintf(">>> Saving response to placeholder:\n%s\n",
-				$response_placeholder
-			);
-		}
-		
-		return $out;
-	}
-	
-	function run($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
-		$freshbooks = WgmFreshbooksAPI::getInstance();
-		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
-		
-		@$xml = $tpl_builder->build($params['xml'], $dict);
-		@$response_placeholder = $params['response_placeholder'];
-		
-		if(empty($response_placeholder))
+		if(empty($consumer_key) || empty($consumer_secret))
 			return false;
 		
-		$response = $freshbooks->requestXML($xml);
-		$dict->$response_placeholder = $response;
+		return array(
+			'key' => $consumer_key,
+			'secret' => $consumer_secret,
+		);
 	}
-};
-endif;
+	
+	function renderPopup() {
+		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
+		
+		// [TODO] Report about missing app keys
+		if(false == ($app_keys = $this->_getAppKeys()))
+			return false;
+		
+		$url_writer = DevblocksPlatform::getUrlService();
+		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
+		
+		$request_url = sprintf("https://%s.freshbooks.com/%s", $app_keys['key'], WgmFreshbooksAPI::REQUEST_TOKEN_PATH);
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Freshbooks::ID), true) . '?view_id=' . rawurlencode($view_id);
+		
+		// Obtain a request token
+		$request = $oauth->getRequestTokens($request_url, $redirect_url);
+		
+		if(!isset($request['oauth_token']) || !isset($request['oauth_token_secret']))
+			return false;
+		
+		// [TODO] Test Oauth callback confirmed
+		
+		$_SESSION['freshbooks_oauth_token'] = $request['oauth_token'];
+		$_SESSION['freshbooks_oauth_token_secret'] = $request['oauth_token_secret'];
+		
+		// Redirect to authorization URL
+		$url = $oauth->getAuthenticationURL(
+			sprintf("https://%s.freshbooks.com/%s", $app_keys['key'], WgmFreshbooksAPI::AUTHORIZATION_PATH),
+			$_SESSION['freshbooks_oauth_token']
+		);
+		
+		header('Location: ' . $url);
+	}
+	
+	function oauthCallback() {
+		@$token = DevblocksPlatform::importGPC($_REQUEST['oauth_token'], 'string', '');
+		@$verifier = DevblocksPlatform::importGPC($_REQUEST['oauth_verifier'], 'string', '');
+		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
+		
+		@$oauth_token = $_SESSION['freshbooks_oauth_token'];
+		@$oauth_token_secret = $_SESSION['freshbooks_oauth_token_secret'];
+
+		// Verify the caller
+		// [TODO] Pass a 'state' on the callback to verify
+		if($token != $oauth_token)
+			return false;
+		
+		$url_writer = DevblocksPlatform::getUrlService();
+		$active_worker = CerberusApplication::getActiveWorker();
+		
+		if(false == ($app_keys = $this->_getAppKeys()))
+			return false;
+
+		// OAuth callback
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Facebook::ID), true) . '?view_id=' . rawurlencode($view_id);
+		
+		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
+		$oauth->setTokens($oauth_token, $oauth_token_secret);
+		
+		$url = sprintf("https://%s.freshbooks.com/%s", $app_keys['key'], WgmFreshbooksAPI::ACCESS_TOKEN_PATH);
+			
+		$params = $oauth->getAccessToken($url, array(), array('oauth_verifier' => $verifier));
+		
+		if(!is_array($params) || !isset($params['oauth_token']) || !isset($params['oauth_token_secret']))
+			return false;
+		
+		$freshbooks = new WgmFreshbooksAPI();
+		$freshbooks->setTokens($params['oauth_token'], $params['oauth_token_secret']);
+		
+		if(false == ($xml = $freshbooks->getStaffCurrent()))
+			return false;
+
+		@$username = $xml->staff->username;
+		
+		if(empty($username))
+			return false;
+		
+		$id = DAO_ConnectedAccount::create(array(
+			DAO_ConnectedAccount::NAME => 'Freshbooks @' . $username,
+			DAO_ConnectedAccount::EXTENSION_ID => ServiceProvider_Freshbooks::ID,
+			DAO_ConnectedAccount::OWNER_CONTEXT => CerberusContexts::CONTEXT_WORKER,
+			DAO_ConnectedAccount::OWNER_CONTEXT_ID => $active_worker->id,
+		));
+		
+		DAO_ConnectedAccount::setAndEncryptParams($id, $params);
+		
+		if($view_id) {
+			echo sprintf("<script>window.opener.genericAjaxGet('view%s', 'c=internal&a=viewRefresh&id=%s');</script>",
+				rawurlencode($view_id),
+				rawurlencode($view_id)
+			);
+			
+			C4_AbstractView::setMarqueeContextCreated($view_id, CerberusContexts::CONTEXT_CONNECTED_ACCOUNT, $id);
+		}
+		
+		echo "<script>window.close();</script>";
+	}
+	
+	function authenticateHttpRequest(Model_ConnectedAccount $account, &$ch, &$verb, &$url, &$body, &$headers) {
+		$credentials = $account->decryptParams();
+		
+		if(
+			!isset($credentials['oauth_token'])
+			|| !isset($credentials['oauth_token_secret'])
+		)
+			return false;
+		
+		$freshbooks = new WgmFreshbooksAPI();
+		$freshbooks->setTokens($credentials['oauth_token'], $credentials['oauth_token_secret']);
+		
+		$results = $freshbooks->authenticateHttpRequest($ch, $verb, $url, $body, $headers);
+		
+		return $results;
+	}
+	
+}
