@@ -11,7 +11,7 @@
 	<!-- Requirements -->
 
 	<requires>
-		<app_version min="7.2" max="7.2.99" />
+		<app_version min="7.3" max="7.3.99" />
 		<php_extension name="curl" />
 	</requires>
  
@@ -37,7 +37,7 @@
 			<class name="WgmFreshbooksAPI" />
 			<class name="WgmFreshbooksHelper" />
 		</file>
-		<file path="api/dao/wgm_freshbooks_client.php">
+		<file path="api/dao/freshbooks_client.php">
 			<class name="Context_WgmFreshbooksClient" />
 			<class name="DAO_WgmFreshbooksClient" />
 			<class name="Model_WgmFreshbooksClient" />
@@ -63,7 +63,7 @@
 			<id>wgm.freshbooks.contexts.client</id>
 			<name>Freshbooks Client</name>
 			<class>
-				<file>api/dao/wgm_freshbooks_client.php</file>
+				<file>api/dao/freshbooks_client.php</file>
 				<name>Context_WgmFreshbooksClient</name>
 			</class>
 			<params>
@@ -78,9 +78,8 @@
 				<param key="view_class" value="View_WgmFreshbooksClient" />
 				<param key="options">
 					<value>
-						<!--<data key="create" />-->
-						<data key="find" />
-						<!--<data key="snippets" />-->
+						<data key="links" />
+						<data key="search" />
 						<data key="va_variable" />
 						<data key="workspace" />
 					</value>
@@ -109,9 +108,8 @@
 				<param key="view_class" value="View_FreshbooksInvoice" />
 				<param key="options">
 					<value>
-						<!--<data key="create" />-->
-						<data key="find" />
-						<!--<data key="snippets" />-->
+						<data key="links" />
+						<data key="search" />
 						<data key="va_variable" />
 						<data key="workspace" />
 					</value>

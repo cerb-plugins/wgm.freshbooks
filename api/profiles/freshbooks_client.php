@@ -65,7 +65,7 @@ class PageSection_ProfilesFreshbooksClient extends Extension_PageSection {
 					DAO_ContextLink::getContextLinkCounts(
 						'wgm.freshbooks.contexts.client',
 						$client->id,
-						array(CerberusContexts::CONTEXT_WORKER, CerberusContexts::CONTEXT_CUSTOM_FIELDSET)
+						array(CerberusContexts::CONTEXT_CUSTOM_FIELDSET)
 					),
 			),
 		);
@@ -76,7 +76,7 @@ class PageSection_ProfilesFreshbooksClient extends Extension_PageSection {
 					DAO_ContextLink::getContextLinkCounts(
 						CerberusContexts::CONTEXT_ORG,
 						$client->org_id,
-						array(CerberusContexts::CONTEXT_WORKER, CerberusContexts::CONTEXT_CUSTOM_FIELDSET)
+						array(CerberusContexts::CONTEXT_CUSTOM_FIELDSET)
 					),
 			);
 		}
