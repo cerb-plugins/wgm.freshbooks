@@ -17,4 +17,6 @@ if(!is_null($consumer_key) || !is_null($consumer_secret)) {
 	$settings->delete('wgm.freshbooks', ['consumer_key','consumer_secret']);
 }
 
+$settings->delete('wgm.freshbooks', ['api_url','api_token']);
+
 return TRUE;
