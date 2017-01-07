@@ -921,7 +921,7 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 			return false;
 
 		// OAuth callback
-		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Facebook::ID), true) . '?view_id=' . rawurlencode($view_id);
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Freshbooks::ID), true) . '?view_id=' . rawurlencode($view_id);
 		
 		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
 		$oauth->setTokens($oauth_token, $oauth_token_secret);
