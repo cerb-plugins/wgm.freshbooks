@@ -1,7 +1,7 @@
 Cerb Plugins - wgm.freshbooks
 ===========================================
 Copyright (C) 2012-2017 Webgroup Media, LLC.  
-[http://cerb.io/](http://cerb.io/)  
+[http://cerb.ai/](http://cerb.ai/)  
 
 ![](https://github.com/cerb-plugins/wgm.freshbooks/wiki/freshbooks_plugin.png)
 
@@ -21,7 +21,7 @@ For development purposes:
 
 Credits
 -------
-This plugin was developed by [Webgroup Media, LLC](http://www.cerberusweb.com/).
+This plugin was developed by [Webgroup Media, LLC](https://cerb.ai/).
 Development was sponsored by [Nolan Interactive](http://www.nolaninteractive.com/).  
 
 License
