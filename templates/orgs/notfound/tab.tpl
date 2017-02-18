@@ -20,6 +20,7 @@
 					{foreach from=$addresses item=address}
 					<li style="margin:2px;">
 						<div class="badge badge-lightgray">
+							{* [TODO] Fix references to ->first_name and ->last_name on $addy here *}
 							<a href="javascript:;" onclick="$this=$(this);$form=$this.closest('form');$form.find('input[name=email]').val('{$address->email}');$form.find('input[name=first_name]').val('{$address->first_name}');$form.find('input[name=last_name]').val('{$address->last_name}');$this.closest('ul').fadeOut();" style="text-decoration:none;">use</a>
 						</div>
 						{$name = $address->getName()}
