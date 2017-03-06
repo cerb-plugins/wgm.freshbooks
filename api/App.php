@@ -217,7 +217,7 @@ class WgmFreshbooksHelper {
 			$updated = strtotime($date->format('Y-m-d H:i:s'));
 		}
 	
-		$status_label = strtolower((string) $xml_invoice->status);
+		$status_label = DevblocksPlatform::strLower((string) $xml_invoice->status);
 		@$status_id = $statuses[$status_label];
 		
 		$fields = array(
