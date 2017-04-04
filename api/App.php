@@ -851,6 +851,40 @@ endif;
 
 class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IServiceProvider_OAuth, IServiceProvider_HttpRequestSigner {
 	const ID = 'wgm.freshbooks.service.provider';
+	
+	function renderConfigForm(Model_ConnectedAccount $account) {
+		$tpl = DevblocksPlatform::getTemplateService();
+		$active_worker = CerberusApplication::getActiveWorker();
+		
+		$tpl->assign('account', $account);
+		
+		$params = $account->decryptParams($active_worker);
+		$tpl->assign('params', $params);
+		
+		$tpl->display('devblocks:wgm.freshbooks::provider/freshbooks.tpl');
+	}
+	
+	function saveConfigForm(Model_ConnectedAccount $account, array &$params) {
+		@$edit_params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
+		
+		$active_worker = CerberusApplication::getActiveWorker();
+		$encrypt = DevblocksPlatform::getEncryptionService();
+		
+		// Decrypt OAuth params
+		if(isset($edit_params['params_json'])) {
+			if(false == ($outh_params_json = $encrypt->decrypt($edit_params['params_json'])))
+				return "The connected account authentication is invalid.";
+				
+			if(false == ($oauth_params = json_decode($outh_params_json, true)))
+				return "The connected account authentication is malformed.";
+			
+			if(is_array($oauth_params))
+			foreach($oauth_params as $k => $v)
+				$params[$k] = $v;
+		}
+		
+		return true;
+	}
 
 	private function _getAppKeys() {
 		if(false == ($credentials = DevblocksPlatform::getPluginSetting('wgm.freshbooks','credentials',false,true,true)))
@@ -868,8 +902,11 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		);
 	}
 	
-	function renderPopup() {
-		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
+	function oauthRender() {
+		@$form_id = DevblocksPlatform::importGPC($_REQUEST['form_id'], 'string', '');
+		
+		// Store the $form_id in the session
+		$_SESSION['oauth_form_id'] = $form_id;
 		
 		// [TODO] Report about missing app keys
 		if(false == ($app_keys = $this->_getAppKeys()))
@@ -879,7 +916,7 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
 		
 		$request_url = sprintf("https://%s.freshbooks.com/%s", $app_keys['key'], WgmFreshbooksAPI::REQUEST_TOKEN_PATH);
-		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Freshbooks::ID), true) . '?view_id=' . rawurlencode($view_id);
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Freshbooks::ID), true);
 		
 		// Obtain a request token
 		$request = $oauth->getRequestTokens($request_url, $redirect_url);
@@ -904,10 +941,12 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 	function oauthCallback() {
 		@$token = DevblocksPlatform::importGPC($_REQUEST['oauth_token'], 'string', '');
 		@$verifier = DevblocksPlatform::importGPC($_REQUEST['oauth_verifier'], 'string', '');
-		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
 		
 		@$oauth_token = $_SESSION['freshbooks_oauth_token'];
 		@$oauth_token_secret = $_SESSION['freshbooks_oauth_token_secret'];
+		
+		$form_id = $_SESSION['oauth_form_id'];
+		unset($_SESSION['oauth_form_id']);
 
 		// Verify the caller
 		// [TODO] Pass a 'state' on the callback to verify
@@ -916,12 +955,13 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		
 		$url_writer = DevblocksPlatform::getUrlService();
 		$active_worker = CerberusApplication::getActiveWorker();
+		$encrypt = DevblocksPlatform::getEncryptionService();
 		
 		if(false == ($app_keys = $this->_getAppKeys()))
 			return false;
 
 		// OAuth callback
-		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Freshbooks::ID), true) . '?view_id=' . rawurlencode($view_id);
+		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Freshbooks::ID), true);
 		
 		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
 		$oauth->setTokens($oauth_token, $oauth_token_secret);
@@ -939,30 +979,19 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		if(false == ($xml = $freshbooks->getStaffCurrent()))
 			return false;
 
-		@$username = $xml->staff->username;
+		@$username = (string) $xml->staff->username;
 		
 		if(empty($username))
 			return false;
 		
-		$id = DAO_ConnectedAccount::create(array(
-			DAO_ConnectedAccount::NAME => 'Freshbooks @' . $username,
-			DAO_ConnectedAccount::EXTENSION_ID => ServiceProvider_Freshbooks::ID,
-			DAO_ConnectedAccount::OWNER_CONTEXT => CerberusContexts::CONTEXT_WORKER,
-			DAO_ConnectedAccount::OWNER_CONTEXT_ID => $active_worker->id,
-		));
+		$params['username'] = $username;
 		
-		DAO_ConnectedAccount::setAndEncryptParams($id, $params);
-		
-		if($view_id) {
-			echo sprintf("<script>window.opener.genericAjaxGet('view%s', 'c=internal&a=viewRefresh&id=%s');</script>",
-				rawurlencode($view_id),
-				rawurlencode($view_id)
-			);
-			
-			C4_AbstractView::setMarqueeContextCreated($view_id, CerberusContexts::CONTEXT_CONNECTED_ACCOUNT, $id);
-		}
-		
-		echo "<script>window.close();</script>";
+		// Output
+		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl->assign('form_id', $form_id);
+		$tpl->assign('label', $username);
+		$tpl->assign('params_json', $encrypt->encrypt(json_encode($params)));
+		$tpl->display('devblocks:cerberusweb.core::internal/connected_account/oauth_callback.tpl');
 	}
 	
 	function authenticateHttpRequest(Model_ConnectedAccount $account, &$ch, &$verb, &$url, &$body, &$headers) {

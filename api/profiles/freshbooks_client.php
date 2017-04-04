@@ -70,7 +70,7 @@ class PageSection_ProfilesFreshbooksClient extends Extension_PageSection {
 			),
 		);
 		
-		if(isset($client->org_id)) {
+		if(!empty($client->org_id)) {
 			$properties_links[CerberusContexts::CONTEXT_ORG] = array(
 				$client->org_id => 
 					DAO_ContextLink::getContextLinkCounts(
@@ -86,14 +86,6 @@ class PageSection_ProfilesFreshbooksClient extends Extension_PageSection {
 		// Properties
 		
 		$tpl->assign('properties', $properties);
-		
-		// Macros
-		
-//		$macros = DAO_TriggerEvent::getReadableByActor(
-//			$active_worker,
-//			'event.macro.'
-//		);
-// 		$tpl->assign('macros', $macros);
 		
 		$tpl->display('devblocks:wgm.freshbooks::profile.tpl');
 	}
