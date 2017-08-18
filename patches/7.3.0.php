@@ -1,7 +1,7 @@
 <?php
-$db = DevblocksPlatform::getDatabaseService();
-$logger = DevblocksPlatform::getConsoleLog();
-$settings = DevblocksPlatform::getPluginSettingsService();
+$db = DevblocksPlatform::services()->database();
+$logger = DevblocksPlatform::services()->log();
+$settings = DevblocksPlatform::services()->pluginSettings();
 $tables = $db->metaTables();
 
 $consumer_key = $settings->get('wgm.freshbooks', 'consumer_key', null);

@@ -1,16 +1,68 @@
 <?php
 class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
-	const ID = 'id';
 	const ACCOUNT_NAME = 'account_name';
-	const EMAIL_ID = 'email_id';
-	const ORG_ID = 'org_id';
-	const UPDATED = 'updated';
-	const SYNCHRONIZED = 'synchronized';
 	const BALANCE = 'balance';
 	const DATA_JSON = 'data_json';
+	const EMAIL_ID = 'email_id';
+	const ID = 'id';
+	const ORG_ID = 'org_id';
+	const SYNCHRONIZED = 'synchronized';
+	const UPDATED = 'updated';
+	
+	private function __construct() {}
 
+	static function getFields() {
+		$validation = DevblocksPlatform::services()->validation();
+		
+		// varchar(255)
+		$validation
+			->addField(self::ACCOUNT_NAME)
+			->string()
+			->setMaxLength(255)
+			;
+		// decimal(8,2) unsigned
+		$validation
+			->addField(self::BALANCE)
+			->float()
+			;
+		// text
+		$validation
+			->addField(self::DATA_JSON)
+			->string()
+			->setMaxLength(65535)
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::EMAIL_ID)
+			->id()
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::ID)
+			->id()
+			->setEditable(false)
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::ORG_ID)
+			->id()
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::SYNCHRONIZED)
+			->timestamp()
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::UPDATED)
+			->timestamp()
+			;
+
+		return $validation->getFields();
+	}
+	
 	static function create($fields) {
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 		
 		@$id = $fields[self::ID];
 		
@@ -35,7 +87,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	}
 	
 	static function mergeOrgIds($from_ids, $to_id) {
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 		
 		if(empty($to_id) || empty($from_ids))
 			return false;
@@ -57,7 +109,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	 * @return Model_WgmFreshbooksClient[]
 	 */
 	static function getWhere($where=null, $sortBy=null, $sortAsc=true, $limit=null) {
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 
 		list($where_sql, $sort_sql, $limit_sql) = self::_getWhereSQL($where, $sortBy, $sortAsc, $limit);
 		
@@ -128,7 +180,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	
 	static function delete($ids) {
 		if(!is_array($ids)) $ids = array($ids);
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 		
 		if(empty($ids))
 			return;
@@ -202,7 +254,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	 * @return array
 	 */
 	static function search($columns, $params, $limit=10, $page=0, $sortBy=null, $sortAsc=null, $withCounts=true) {
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 		
 		// Build search queries
 		$query_parts = self::getSearchQueryComponents($columns,$params,$sortBy,$sortAsc);
@@ -256,7 +308,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	}
 	
 	static function updateBalances() {
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 
 		$db->ExecuteMaster("DROP TABLE IF EXISTS _tmp_balance");
 		$db->ExecuteMaster("UPDATE wgm_freshbooks_client SET balance = 0.00 WHERE balance > 0");
@@ -517,7 +569,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 	function render() {
 		$this->_sanitize();
 		
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('id', $this->id);
 		$tpl->assign('view', $this);
 
@@ -525,7 +577,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 	}
 
 	function renderCriteria($field) {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('id', $this->id);
 
 		switch($field) {
@@ -664,7 +716,7 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		if(empty($context_id))
 			return '';
 	
-		$url_writer = DevblocksPlatform::getUrlService();
+		$url_writer = DevblocksPlatform::services()->url();
 		$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_client&id='.$context_id, true);
 		return $url;
 	}
@@ -769,31 +821,18 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 
 			// Custom fields
 			$token_values = $this->_importModelCustomFieldsAsValues($object, $token_values);
-			
-			// URL
-// 			$url_writer = DevblocksPlatform::getUrlService();
-// 			$token_values['record_url'] = $url_writer->writeNoProxy(sprintf("c=profiles&type=address&id=%d-%s",$address->id, DevblocksPlatform::strToPermalink($address->email)), true);
-			
-			// Org
-// 			$org_id = (null != $address && !empty($address->contact_org_id)) ? $address->contact_org_id : null;
-// 			$token_values['org_id'] = $org_id;
 		}
 		
-		// Email Org
-// 		$merge_token_labels = array();
-// 		$merge_token_values = array();
-// 		CerberusContexts::getContext(CerberusContexts::CONTEXT_ORG, null, $merge_token_labels, $merge_token_values, null, true);
-
-// 		CerberusContexts::merge(
-// 			'org_',
-// 			$prefix,
-// 			$merge_token_labels,
-// 			$merge_token_values,
-// 			$token_labels,
-// 			$token_values
-// 		);
-		
 		return true;
+	}
+	
+	function getKeyToDaoFieldMap() {
+		return [
+			'balance' => DAO_WgmFreshbooksClient::BALANCE,
+			'id' => DAO_WgmFreshbooksClient::ID,
+			'name' => DAO_WgmFreshbooksClient::ACCOUNT_NAME,
+			'updated' => DAO_WgmFreshbooksClient::UPDATED,
+		];
 	}
 	
 	function lazyLoadContextValues($token, $dictionary) {

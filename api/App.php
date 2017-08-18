@@ -18,7 +18,7 @@ class WgmFreshbooksAPI {
 		@$consumer_key = @$credentials['consumer_key'];
 		@$consumer_secret = @$credentials['consumer_secret'];
 		
-		$this->_oauth = DevblocksPlatform::getOAuthService($consumer_key, $consumer_secret, 'PLAINTEXT');
+		$this->_oauth = DevblocksPlatform::services()->oauth($consumer_key, $consumer_secret, 'PLAINTEXT');
 		
 		$this->_base_api_url = sprintf("https://%s.freshbooks.com/%s", $consumer_key, self::API_PATH);
 	}
@@ -488,7 +488,7 @@ class WgmFreshbooks_SetupPageSection extends Extension_PageSection {
 	const ID = 'wgm.freshbooks.setup.section.freshbooks';
 	
 	function render() {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 
 		$visit = CerberusApplication::getVisit();
 		$visit->set(ChConfigurationPage::ID, 'freshbooks');
@@ -539,7 +539,7 @@ class WgmFreshbooks_SetupPluginsMenuItem extends Extension_PageMenuItem {
 	const ID = 'wgm.freshbooks.setup.menu.plugins.freshbooks';
 	
 	function render() {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->display('devblocks:wgm.freshbooks::config/menu_item.tpl');
 	}
 };
@@ -548,7 +548,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	const ID = 'wgm.freshbooks.cron.sync';
 	
 	public function run() {
-		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
+		$logger = DevblocksPlatform::services()->log("Freshbooks");
 		$logger->info("Started");
 		
 		if(false == ($sync_account_id = DevblocksPlatform::getPluginSetting('wgm.freshbooks', 'sync_account_id', 0))) {
@@ -586,7 +586,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	}
 	
 	private function _synchronizeClients(WgmFreshbooksAPI $freshbooks) {
-		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
+		$logger = DevblocksPlatform::services()->log("Freshbooks");
 		
 		// Retrieve clients that have changed since their sync date with org_id != 0
 		$loops = 0;
@@ -648,7 +648,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	}
 	
 	private function _downloadClients(WgmFreshbooksAPI $freshbooks) {
-		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
+		$logger = DevblocksPlatform::services()->log("Freshbooks");
 		
 		$updated_from_timestamp = $this->getParam('clients.updated_from', 0);
 		
@@ -708,7 +708,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	}
 	
 	private function _downloadInvoices(WgmFreshbooksAPI $freshbooks) {
-		$logger = DevblocksPlatform::getConsoleLog("Freshbooks");
+		$logger = DevblocksPlatform::services()->log("Freshbooks");
 	
 		$updated_from_timestamp = $this->getParam('invoices.updated_from', 0);
 	
@@ -771,7 +771,7 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	}
 	
 	public function configure($instance) {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->cache_lifetime = "0";
 
 		// Load settings
@@ -811,7 +811,7 @@ class WgmFreshbooksOrgTab extends Extension_ContextProfileTab {
 		
 		$org_id = $context_id;
 		
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		
 		// Check if this org_id is in the Freshbooks client table
 		$clients = $client = DAO_WgmFreshbooksClient::getWhere(sprintf("%s = %d",
@@ -853,7 +853,7 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 	const ID = 'wgm.freshbooks.service.provider';
 	
 	function renderConfigForm(Model_ConnectedAccount $account) {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$active_worker = CerberusApplication::getActiveWorker();
 		
 		$tpl->assign('account', $account);
@@ -868,7 +868,7 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		@$edit_params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
 		
 		$active_worker = CerberusApplication::getActiveWorker();
-		$encrypt = DevblocksPlatform::getEncryptionService();
+		$encrypt = DevblocksPlatform::services()->encryption();
 		
 		// Decrypt OAuth params
 		if(isset($edit_params['params_json'])) {
@@ -912,8 +912,8 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		if(false == ($app_keys = $this->_getAppKeys()))
 			return false;
 		
-		$url_writer = DevblocksPlatform::getUrlService();
-		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
+		$url_writer = DevblocksPlatform::services()->url();
+		$oauth = DevblocksPlatform::services()->oauth($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
 		
 		$request_url = sprintf("https://%s.freshbooks.com/%s", $app_keys['key'], WgmFreshbooksAPI::REQUEST_TOKEN_PATH);
 		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Freshbooks::ID), true);
@@ -953,9 +953,9 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		if($token != $oauth_token)
 			return false;
 		
-		$url_writer = DevblocksPlatform::getUrlService();
+		$url_writer = DevblocksPlatform::services()->url();
 		$active_worker = CerberusApplication::getActiveWorker();
-		$encrypt = DevblocksPlatform::getEncryptionService();
+		$encrypt = DevblocksPlatform::services()->encryption();
 		
 		if(false == ($app_keys = $this->_getAppKeys()))
 			return false;
@@ -963,7 +963,7 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		// OAuth callback
 		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_Freshbooks::ID), true);
 		
-		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
+		$oauth = DevblocksPlatform::services()->oauth($app_keys['key'], $app_keys['secret'], 'PLAINTEXT');
 		$oauth->setTokens($oauth_token, $oauth_token_secret);
 		
 		$url = sprintf("https://%s.freshbooks.com/%s", $app_keys['key'], WgmFreshbooksAPI::ACCESS_TOKEN_PATH);
@@ -987,7 +987,7 @@ class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IS
 		$params['username'] = $username;
 		
 		// Output
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('form_id', $form_id);
 		$tpl->assign('label', $username);
 		$tpl->assign('params_json', $encrypt->encrypt(json_encode($params)));

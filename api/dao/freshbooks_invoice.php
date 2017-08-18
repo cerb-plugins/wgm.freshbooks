@@ -1,17 +1,74 @@
 <?php
 class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
+	const AMOUNT = 'amount';
+	const CLIENT_ID = 'client_id';
+	const CREATED = 'created';
+	const DATA_JSON = 'data_json';
 	const ID = 'id';
 	const INVOICE_ID = 'invoice_id';
-	const CLIENT_ID = 'client_id';
 	const NUMBER = 'number';
-	const AMOUNT = 'amount';
 	const STATUS = 'status';
-	const CREATED = 'created';
 	const UPDATED = 'updated';
-	const DATA_JSON = 'data_json';
+	
+	private function __construct() {}
+
+	static function getFields() {
+		$validation = DevblocksPlatform::services()->validation();
+		
+		// decimal(8,2) unsigned
+		$validation
+			->addField(self::AMOUNT)
+			->float()
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::CLIENT_ID)
+			->id()
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::CREATED)
+			->timestamp()
+			;
+		// text
+		$validation
+			->addField(self::DATA_JSON)
+			->string()
+			->setMaxLength(65535)
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::ID)
+			->id()
+			->setEditable(false)
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::INVOICE_ID)
+			->id()
+			;
+		// varchar(255)
+		$validation
+			->addField(self::NUMBER)
+			->string()
+			->setMaxLength(255)
+			;
+		// tinyint(3) unsigned
+		$validation
+			->addField(self::STATUS)
+			->uint(1)
+			;
+		// int(10) unsigned
+		$validation
+			->addField(self::UPDATED)
+			->timestamp()
+			;
+
+		return $validation->getFields();
+	}
 
 	static function create($fields) {
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 
 		$sql = "INSERT INTO freshbooks_invoice () VALUES ()";
 		$db->ExecuteMaster($sql);
@@ -45,7 +102,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 			if($check_deltas) {
 				
 				// Trigger an event about the changes
-				$eventMgr = DevblocksPlatform::getEventService();
+				$eventMgr = DevblocksPlatform::services()->event();
 				$eventMgr->trigger(
 					new Model_DevblocksEvent(
 						'dao.freshbooks_invoice.update',
@@ -73,7 +130,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	 * @return Model_FreshbooksInvoice[]
 	 */
 	static function getWhere($where=null, $sortBy=null, $sortAsc=true, $limit=null) {
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 
 		list($where_sql, $sort_sql, $limit_sql) = self::_getWhereSQL($where, $sortBy, $sortAsc, $limit);
 
@@ -148,7 +205,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 
 	static function delete($ids) {
 		if(!is_array($ids)) $ids = array($ids);
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 
 		if(empty($ids))
 			return;
@@ -158,7 +215,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 		$db->ExecuteMaster(sprintf("DELETE FROM freshbooks_invoice WHERE id IN (%s)", $ids_list));
 
 		// Fire event
-		$eventMgr = DevblocksPlatform::getEventService();
+		$eventMgr = DevblocksPlatform::services()->event();
 		$eventMgr->trigger(
 			new Model_DevblocksEvent(
 				'context.delete',
@@ -231,7 +288,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	 * @return array
 	 */
 	static function search($columns, $params, $limit=10, $page=0, $sortBy=null, $sortAsc=null, $withCounts=true) {
-		$db = DevblocksPlatform::getDatabaseService();
+		$db = DevblocksPlatform::services()->database();
 
 		// Build search queries
 		$query_parts = self::getSearchQueryComponents($columns,$params,$sortBy,$sortAsc);
@@ -679,7 +736,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	function render() {
 		$this->_sanitize();
 
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('id', $this->id);
 		$tpl->assign('view', $this);
 
@@ -695,7 +752,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	}
 
 	function renderCriteria($field) {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('id', $this->id);
 
 		switch($field) {
@@ -881,7 +938,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		if(empty($context_id))
 			return '';
 
-		$url_writer = DevblocksPlatform::getUrlService();
+		$url_writer = DevblocksPlatform::services()->url();
 		$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_invoice&id='.$context_id, true);
 		return $url;
 	}
@@ -1013,7 +1070,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 			$token_values = $this->_importModelCustomFieldsAsValues($object, $token_values);
 			
 			// URL
-			// $url_writer = DevblocksPlatform::getUrlService();
+			// $url_writer = DevblocksPlatform::services()->url();
 			// $token_values['record_url'] = $url_writer->writeNoProxy(sprintf("c=profiles&type=address&id=%d-%s",$address->id, DevblocksPlatform::strToPermalink($address->email)), true);
 		}
 
@@ -1032,6 +1089,18 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		);
 		
 		return true;
+	}
+	
+	function getKeyToDaoFieldMap() {
+		return [
+			'amount' => DAO_FreshbooksInvoice::AMOUNT,
+			'client_id' => DAO_FreshbooksInvoice::CLIENT_ID,
+			'created' => DAO_FreshbooksInvoice::CREATED,
+			'id' => DAO_FreshbooksInvoice::ID,
+			'number' => DAO_FreshbooksInvoice::NUMBER,
+			'status' => DAO_FreshbooksInvoice::STATUS,
+			'updated' => DAO_FreshbooksInvoice::UPDATED,
+		];
 	}
 
 	function lazyLoadContextValues($token, $dictionary) {
