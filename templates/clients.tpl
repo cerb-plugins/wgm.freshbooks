@@ -1,3 +1,4 @@
+{$view_context = 'wgm.freshbooks.contexts.client'}
 {$view_fields = $view->getColumnsAvailable()}
 {$results = $view->getData()}
 {$total = $results[1]}
