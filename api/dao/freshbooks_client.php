@@ -57,7 +57,12 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 			->addField(self::UPDATED)
 			->timestamp()
 			;
-
+		$validation
+			->addField('_links')
+			->string()
+			->setMaxLength(65535)
+			;
+			
 		return $validation->getFields();
 	}
 	
@@ -79,6 +84,9 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	}
 	
 	static function update($ids, $fields) {
+		$context = Context_WgmFreshbooksClient::ID;
+		self::_updateAbstract($context, $ids, $fields);
+		
 		parent::_update($ids, 'wgm_freshbooks_client', $fields);
 	}
 	
@@ -697,6 +705,10 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 };
 
 class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements IDevblocksContextProfile { //, IDevblocksContextPeek, IDevblocksContextImport
+	static function isCreateableByActor(array $fields, $actor) {
+		return false;
+	}
+	
 	static function isReadableByActor($models, $actor) {
 		// Everyone can view
 		return CerberusContexts::allowEverything($models);
@@ -829,9 +841,20 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		return [
 			'balance' => DAO_WgmFreshbooksClient::BALANCE,
 			'id' => DAO_WgmFreshbooksClient::ID,
+			'links' => '_links',
 			'name' => DAO_WgmFreshbooksClient::ACCOUNT_NAME,
 			'updated' => DAO_WgmFreshbooksClient::UPDATED,
 		];
+	}
+	
+	function getDaoFieldsFromKeyAndValue($key, $value, &$out_fields, &$error) {
+		switch(DevblocksPlatform::strLower($key)) {
+			case 'links':
+				$this->_getDaoFieldsLinks($value, $out_fields, $error);
+				break;
+		}
+		
+		return true;
 	}
 	
 	function lazyLoadContextValues($token, $dictionary) {

@@ -63,7 +63,12 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 			->addField(self::UPDATED)
 			->timestamp()
 			;
-
+		$validation
+			->addField('_links')
+			->string()
+			->setMaxLength(65535)
+			;
+			
 		return $validation->getFields();
 	}
 
@@ -82,6 +87,9 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	static function update($ids, $fields, $check_deltas=true) {
 		if(!is_array($ids))
 			$ids = array($ids);
+		
+		$context = Context_FreshbooksInvoice::ID;
+		self::_updateAbstract($context, $ids, $fields);
 		
 		// Make a diff for the requested objects in batches
 		
@@ -547,7 +555,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 					
 				// Valid custom fields
 				default:
-					if('cf_' == substr($field_key,0,3))
+					if(DevblocksPlatform::strStartsWith($field_key, 'cf_'))
 						$pass = $this->_canSubtotalCustomField($field_key);
 					break;
 			}
@@ -746,8 +754,8 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		//$custom_fields = DAO_CustomField::getByContext(CerberusContexts::XXX);
 		//$tpl->assign('custom_fields', $custom_fields);
 
- 		$tpl->assign('view_template', 'devblocks:wgm.freshbooks::invoices.tpl');
- 		$tpl->display('devblocks:cerberusweb.core::internal/views/subtotals_and_view.tpl');
+		$tpl->assign('view_template', 'devblocks:wgm.freshbooks::invoices.tpl');
+		$tpl->display('devblocks:cerberusweb.core::internal/views/subtotals_and_view.tpl');
 	}
 
 	function renderCriteria($field) {
@@ -797,7 +805,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				break;
 				
 				/*
-				 default:
+				default:
 				// Custom Fields
 				if('cf_' == substr($field,0,3)) {
 				$this->_renderCriteriaCustomField($tpl, substr($field,3));
@@ -902,7 +910,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				break;
 				
 				/*
-				 default:
+				default:
 				// Custom Fields
 				if(substr($field,0,3)=='cf_') {
 				$criteria = $this->_doSetCriteriaCustomField($field, substr($field,3));
@@ -919,6 +927,10 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 };
 
 class Context_FreshbooksInvoice extends Extension_DevblocksContext implements IDevblocksContextProfile { //, IDevblocksContextPeek, IDevblocksContextImport
+	static function isCreateableByActor(array $fields, $actor) {
+		return false;
+	}
+	
 	static function isReadableByActor($models, $actor) {
 		// Everyone can view
 		return CerberusContexts::allowEverything($models);
@@ -1096,10 +1108,21 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 			'client_id' => DAO_FreshbooksInvoice::CLIENT_ID,
 			'created' => DAO_FreshbooksInvoice::CREATED,
 			'id' => DAO_FreshbooksInvoice::ID,
+			'links' => '_links',
 			'number' => DAO_FreshbooksInvoice::NUMBER,
 			'status' => DAO_FreshbooksInvoice::STATUS,
 			'updated' => DAO_FreshbooksInvoice::UPDATED,
 		];
+	}
+	
+	function getDaoFieldsFromKeyAndValue($key, $value, &$out_fields, &$error) {
+		switch(DevblocksPlatform::strLower($key)) {
+			case 'links':
+				$this->_getDaoFieldsLinks($value, $out_fields, $error);
+				break;
+		}
+		
+		return true;
 	}
 
 	function lazyLoadContextValues($token, $dictionary) {
