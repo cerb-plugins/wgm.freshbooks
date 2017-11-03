@@ -927,10 +927,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 };
 
 class Context_FreshbooksInvoice extends Extension_DevblocksContext implements IDevblocksContextProfile { //, IDevblocksContextPeek, IDevblocksContextImport
-	static function isCreateableByActor(array $fields, $actor) {
-		return false;
-	}
-	
 	static function isReadableByActor($models, $actor) {
 		// Everyone can view
 		return CerberusContexts::allowEverything($models);
