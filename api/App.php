@@ -253,18 +253,36 @@ class WgmFreshbooks_EventListener extends DevblocksEventListenerExtension {
 		 */
 		function handleEvent(Model_DevblocksEvent $event) {
 			switch($event->id) {
-				case 'org.merge':
-					$this->_orgMerge($event);
+				case 'record.merge':
+					$context = $event->params['context'];
+					
+					switch($context) {
+						case CerberusContexts::CONTEXT_ADDRESS:
+							$this->_emailMerge($event);
+							break;
+							
+						case CerberusContexts::CONTEXT_ORG:
+							$this->_orgMerge($event);
+							break;
+					}
+					
 					break;
 			}
 		}
 
+		private function _emailMerge($event) {
+			@$target_id = $event->params['target_id'];
+			@$source_ids = $event->params['source_ids'];
+
+			DAO_WgmFreshbooksClient::mergeEmailIds($source_ids, $target_id);
+		}
+		
 		private function _orgMerge($event) {
-			@$merge_to_id = $event->params['merge_to_id'];
-			@$merge_from_ids = $event->params['merge_from_ids'];
+			@$target_id = $event->params['target_id'];
+			@$source_ids = $event->params['source_ids'];
 
 			// [TODO] This should merge invoice client_ids too
-			DAO_WgmFreshbooksClient::mergeOrgIds($merge_from_ids, $merge_to_id);
+			DAO_WgmFreshbooksClient::mergeOrgIds($source_ids, $target_id);
 		}
 }
 
@@ -764,10 +782,10 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 		// [TODO] Enable keys
 	
 		// Save the synchronize date as right now in GMT
- 		$this->setParam('invoices.updated_from', $updated_from_timestamp);
- 		
- 		// Update balance information
- 		DAO_WgmFreshbooksClient::updateBalances();
+		$this->setParam('invoices.updated_from', $updated_from_timestamp);
+		
+		// Update balance information
+		DAO_WgmFreshbooksClient::updateBalances();
 	}
 	
 	public function configure($instance) {

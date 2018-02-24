@@ -94,6 +94,21 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 		parent::_updateWhere('wgm_freshbooks_client', $fields, $where);
 	}
 	
+	static function mergeEmailIds($from_ids, $to_id) {
+		$db = DevblocksPlatform::services()->database();
+		
+		if(empty($to_id) || empty($from_ids))
+			return false;
+			
+		if(!is_numeric($to_id) || !is_array($from_ids))
+			return false;
+		
+		$db->ExecuteMaster(sprintf("UPDATE wgm_freshbooks_client SET email_id = %d WHERE email_id IN (%s)",
+			$to_id,
+			implode(',', $from_ids)
+		));
+	}
+	
 	static function mergeOrgIds($from_ids, $to_id) {
 		$db = DevblocksPlatform::services()->database();
 		
@@ -908,7 +923,6 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$view->renderSortBy = SearchFields_WgmFreshbooksClient::UPDATED;
 		$view->renderSortAsc = true;
 		$view->renderLimit = 10;
-		$view->renderFilters = false;
 		$view->renderTemplate = 'contextlinks_chooser';
 		
 		return $view;
