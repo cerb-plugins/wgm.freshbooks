@@ -377,6 +377,10 @@ class SearchFields_WgmFreshbooksClient extends DevblocksSearchFields {
 			case self::VIRTUAL_CONTEXT_LINK:
 				return self::_getWhereSQLFromContextLinksField($param, 'wgm.freshbooks.contexts.client', self::getPrimaryKey());
 				break;
+				
+			case self::VIRTUAL_HAS_FIELDSET:
+				return self::_getWhereSQLFromVirtualSearchSqlField($param, CerberusContexts::CONTEXT_CUSTOM_FIELDSET, sprintf('SELECT context_id FROM context_to_custom_fieldset WHERE context = %s AND custom_fieldset_id IN (%%s)', Cerb_ORMHelper::qstr(Context_WgmFreshbooksClient::ID)), self::getPrimaryKey());
+				break;
 			
 			default:
 				if('cf_' == substr($param->field, 0, 3)) {
@@ -470,13 +474,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 			SearchFields_WgmFreshbooksClient::VIRTUAL_WATCHERS,
 		));
 		
-		$this->addParamsHidden(array(
-			SearchFields_WgmFreshbooksClient::DATA_JSON,
-			SearchFields_WgmFreshbooksClient::EMAIL_ID,
-			SearchFields_WgmFreshbooksClient::EMAIL_ORG_ID,
-			SearchFields_WgmFreshbooksClient::ORG_ID,
-		));
-		
 		$this->doResetCriteria();
 	}
 
@@ -523,6 +520,14 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 					'type' => DevblocksSearchCriteria::TYPE_TEXT,
 					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS, 'match' => DevblocksSearchCriteria::OPTION_TEXT_PREFIX),
 				),
+			'fieldset' =>
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_VIRTUAL,
+					'options' => array('param_key' => SearchFields_WgmFreshbooksClient::VIRTUAL_HAS_FIELDSET),
+					'examples' => [
+						['type' => 'search', 'context' => CerberusContexts::CONTEXT_CUSTOM_FIELDSET, 'qr' => 'context:' . Context_WgmFreshbooksClient::ID],
+					]
+				),
 			'name' => 
 				array(
 					'type' => DevblocksSearchCriteria::TYPE_TEXT,
@@ -557,7 +562,7 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 		
 		// Add quick search links
 		
-		$fields = self::_appendVirtualFiltersFromQuickSearchContexts('links', $fields, 'links');
+		$fields = self::_appendVirtualFiltersFromQuickSearchContexts('links', $fields, 'links', SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK);
 		
 		// Add searchable custom fields
 		
@@ -576,6 +581,10 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 	
 	function getParamFromQuickSearchFieldTokens($field, $tokens) {
 		switch($field) {
+			case 'fieldset':
+				return DevblocksSearchCriteria::getVirtualQuickSearchParamFromTokens($field, $tokens, '*_has_fieldset');
+				break;
+			
 			default:
 				if($field == 'links' || substr($field, 0, 6) == 'links.')
 					return DevblocksSearchCriteria::getContextLinksParamFromTokens($field, $tokens);
@@ -596,44 +605,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 		$tpl->assign('view', $this);
 
 		$tpl->display('devblocks:wgm.freshbooks::clients.tpl');
-	}
-
-	function renderCriteria($field) {
-		$tpl = DevblocksPlatform::services()->template();
-		$tpl->assign('id', $this->id);
-
-		switch($field) {
-			case SearchFields_WgmFreshbooksClient::ACCOUNT_NAME:
-			case SearchFields_WgmFreshbooksClient::EMAIL_ADDRESS:
-			case SearchFields_WgmFreshbooksClient::ORG_NAME:
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__string.tpl');
-				break;
-			case SearchFields_WgmFreshbooksClient::BALANCE:
-			case SearchFields_WgmFreshbooksClient::ID:
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__number.tpl');
-				break;
-			case 'placeholder_bool':
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__bool.tpl');
-				break;
-			case SearchFields_WgmFreshbooksClient::UPDATED:
-			case SearchFields_WgmFreshbooksClient::SYNCHRONIZED:
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__date.tpl');
-				break;
-				
-			case SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK:
-				$contexts = Extension_DevblocksContext::getAll(false);
-				$tpl->assign('contexts', $contexts);
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__context_link.tpl');
-				break;
-				
-			case SearchFields_WgmFreshbooksClient::VIRTUAL_HAS_FIELDSET:
-				$this->_renderCriteriaHasFieldset($tpl, 'wgm.freshbooks.contexts.client');
-				break;
-				
-			case SearchFields_WgmFreshbooksClient::VIRTUAL_WATCHERS:
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__context_worker.tpl');
-				break;
-		}
 	}
 
 	function renderCriteriaParam($param) {
@@ -741,6 +712,25 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$url_writer = DevblocksPlatform::services()->url();
 		$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_client&id='.$context_id, true);
 		return $url;
+	}
+	
+	function profileGetFields($model=null) {
+		$translate = DevblocksPlatform::getTranslationService();
+		$properties = [];
+		
+		if(is_null($model))
+			$model = new Model_WgmFreshbooksClient();
+		
+		$properties['name'] = array(
+			'label' => mb_ucfirst($translate->_('common.name')),
+			'type' => Model_CustomField::TYPE_LINK,
+			'value' => $model->id,
+			'params' => [
+				'context' => self::ID,
+			],
+		);
+		
+		return $properties;
 	}
 	
 	function getMeta($context_id) {

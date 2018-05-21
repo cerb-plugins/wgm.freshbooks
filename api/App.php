@@ -821,52 +821,6 @@ class WgmFreshbooksSyncCron extends CerberusCronPageExtension {
 	}
 };
 
-if(class_exists('Extension_ContextProfileTab')):
-class WgmFreshbooksOrgTab extends Extension_ContextProfileTab {
-	function showTab($context, $context_id) {
-		if(0 != strcasecmp($context, CerberusContexts::CONTEXT_ORG))
-			return;
-		
-		$org_id = $context_id;
-		
-		$tpl = DevblocksPlatform::services()->template();
-		
-		// Check if this org_id is in the Freshbooks client table
-		$clients = $client = DAO_WgmFreshbooksClient::getWhere(sprintf("%s = %d",
-				DAO_WgmFreshbooksClient::ORG_ID,
-				$org_id
-			),
-			null,
-			null,
-			1
-		);
-
-		if(empty($clients)) {
-			if(null != ($org = DAO_ContactOrg::get($org_id)))
-				$tpl->assign('org', $org);
-				
-			$addresses = DAO_Address::getWhere(sprintf("%s = %d",
-					DAO_Address::CONTACT_ORG_ID,
-					$org_id
-				),
-				DAO_Address::NUM_NONSPAM,
-				false
-			);
-			$tpl->assign('addresses', $addresses);
-				
-			$tpl->display('devblocks:wgm.freshbooks::orgs/notfound/tab.tpl');
-			
-		} else {
-			$client = array_shift($clients);
-			$tpl->assign('client', $client);
-			
-			$tpl->display('devblocks:wgm.freshbooks::orgs/exists/tab.tpl');
-		}
-		
-	}
-};
-endif;
-
 class ServiceProvider_Freshbooks extends Extension_ServiceProvider implements IServiceProvider_OAuth, IServiceProvider_HttpRequestSigner {
 	const ID = 'wgm.freshbooks.service.provider';
 	

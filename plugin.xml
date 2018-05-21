@@ -4,21 +4,21 @@
 	<name>Freshbooks Integration</name>
 	<description>This plugin provides integration with Freshbooks via their REST API. This plugin is intended to be a bridge used by other plugins to communicate with Freshbooks services. It adds records for Freshbooks Clients.  Plugin development has been sponsored by Nolan Interactive - http://www.nolaninteractive.com/</description>
 	<author>Webgroup Media, LLC.</author>
-	<version>1.6.0</version>
+	<version>1.7.0</version>
 	<link>http://www.cerbweb.com/book/latest/plugins/wgm.freshbooks.html</link>
 	<image>plugin.png</image>
 
 	<!-- Requirements -->
 
 	<requires>
-		<app_version min="8.3.0" max="8.3.99" />
+		<app_version min="9.0" max="9.0.99" />
 		<php_extension name="curl" />
 	</requires>
 
 	<!-- Plugin Dependencies -->
 	
 	<dependencies>
-		<require plugin_id="cerberusweb.core" version="8.3.0" />
+		<require plugin_id="cerberusweb.core" version="9.0" />
 	</dependencies>
 
 	<!-- Patches -->
@@ -219,26 +219,6 @@
 			<params>
 				<param key="page_id" value="core.page.profiles" />
 				<param key="uri" value="freshbooks_client" />
-			</params>
-		</extension>
-		
-		<!-- Org Tabs -->
-		
-		<extension point="cerberusweb.ui.context.profile.tab">
-			<id>wgm.freshbooks.org_tab</id>
-			<name>Freshbooks Org Tab</name>
-			<class>
-				<file>api/App.php</file>
-				<name>WgmFreshbooksOrgTab</name>
-			</class>
-			<params>
-				<param key="uri" value="freshbooks" />
-				<param key="contexts">
-					<value>
-						<data key="cerberusweb.contexts.org" />
-					</value>
-				</param>
-				<param key="title" value="wgm.freshbooks.common" />
 			</params>
 		</extension>
 		

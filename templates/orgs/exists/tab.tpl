@@ -23,10 +23,10 @@
 	
 	<br>
 
-	<a href="{$client->data.auth_url}" target="_blank">View client in Freshbooks</a>
+	<a href="{$client->data.auth_url}" target="_blank" rel="noopener noreferrer">View client in Freshbooks</a>
 	{if !empty($client->data.username)}
-		 | 
-		<a href="{$client->data.url}" target="_blank">Log into Freshbooks as {$client->data.username}</a>
+		| 
+		<a href="{$client->data.url}" target="_blank" rel="noopener noreferrer">Log into Freshbooks as {$client->data.username}</a>
 	{/if}
 
 	<br>

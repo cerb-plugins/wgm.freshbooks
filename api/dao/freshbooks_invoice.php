@@ -400,6 +400,10 @@ class SearchFields_FreshbooksInvoice extends DevblocksSearchFields {
 			case self::VIRTUAL_CONTEXT_LINK:
 				return self::_getWhereSQLFromContextLinksField($param, 'wgm.freshbooks.contexts.invoice', self::getPrimaryKey());
 				break;
+				
+			case self::VIRTUAL_HAS_FIELDSET:
+				return self::_getWhereSQLFromVirtualSearchSqlField($param, CerberusContexts::CONTEXT_CUSTOM_FIELDSET, sprintf('SELECT context_id FROM context_to_custom_fieldset WHERE context = %s AND custom_fieldset_id IN (%%s)', Cerb_ORMHelper::qstr(Context_FreshbooksInvoice::ID)), self::getPrimaryKey());
+				break;
 			
 			case self::VIRTUAL_WATCHERS:
 				return self::_getWhereSQLFromWatchersField($param, 'wgm.freshbooks.contexts.invoice', self::getPrimaryKey());
@@ -496,12 +500,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK,
 			SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET,
 			SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS,
-		));
-
-		$this->addParamsHidden(array(
-			SearchFields_FreshbooksInvoice::ID,
-			SearchFields_FreshbooksInvoice::INVOICE_ID,
-			SearchFields_FreshbooksInvoice::DATA_JSON,
 		));
 
 		$this->doResetCriteria();
@@ -634,6 +632,14 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 					'type' => DevblocksSearchCriteria::TYPE_DATE,
 					'options' => array('param_key' => SearchFields_FreshbooksInvoice::CREATED),
 				),
+			'fieldset' =>
+				array(
+					'type' => DevblocksSearchCriteria::TYPE_VIRTUAL,
+					'options' => array('param_key' => SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET),
+					'examples' => [
+						['type' => 'search', 'context' => CerberusContexts::CONTEXT_CUSTOM_FIELDSET, 'qr' => 'context:' . Context_FreshbooksInvoice::ID],
+					]
+				),
 			'freshbooks.id' => 
 				array(
 					'type' => DevblocksSearchCriteria::TYPE_NUMBER,
@@ -679,7 +685,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		
 		// Add quick search links
 		
-		$fields = self::_appendVirtualFiltersFromQuickSearchContexts('links', $fields, 'links');
+		$fields = self::_appendVirtualFiltersFromQuickSearchContexts('links', $fields, 'links', SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK);
 		
 		// Add searchable custom fields
 		
@@ -699,6 +705,10 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	
 	function getParamFromQuickSearchFieldTokens($field, $tokens) {
 		switch($field) {
+			case 'fieldset':
+				return DevblocksSearchCriteria::getVirtualQuickSearchParamFromTokens($field, $tokens, '*_has_fieldset');
+				break;
+			
 			case 'status':
 				$field_key = SearchFields_FreshbooksInvoice::STATUS;
 				$oper = null;
@@ -756,65 +766,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 
 		$tpl->assign('view_template', 'devblocks:wgm.freshbooks::invoices.tpl');
 		$tpl->display('devblocks:cerberusweb.core::internal/views/subtotals_and_view.tpl');
-	}
-
-	function renderCriteria($field) {
-		$tpl = DevblocksPlatform::services()->template();
-		$tpl->assign('id', $this->id);
-
-		switch($field) {
-			case SearchFields_FreshbooksInvoice::ID:
-
-			case SearchFields_FreshbooksInvoice::AMOUNT:
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__string.tpl');
-				break;
-
-			case SearchFields_FreshbooksInvoice::INVOICE_ID:
-			case SearchFields_FreshbooksInvoice::CLIENT_ID:
-			case SearchFields_FreshbooksInvoice::NUMBER:
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__number.tpl');
-				break;
-
-			case 'placeholder_bool':
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__bool.tpl');
-				break;
-				
-			case SearchFields_FreshbooksInvoice::CREATED:
-			case SearchFields_FreshbooksInvoice::UPDATED:
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__date.tpl');
-				break;
-
-			case SearchFields_FreshbooksInvoice::STATUS:
-				$options = DAO_FreshbooksInvoice::getStatuses();
-				$tpl->assign('options', $options);
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__list.tpl');
-				break;
-				
-			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
-				$contexts = Extension_DevblocksContext::getAll(false);
-				$tpl->assign('contexts', $contexts);
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__context_link.tpl');
-				break;
-				
-			case SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET:
-				$this->_renderCriteriaHasFieldset($tpl, 'wgm.freshbooks.contexts.invoice');
-				break;
-				
-			case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
-				$tpl->display('devblocks:cerberusweb.core::internal/views/criteria/__context_worker.tpl');
-				break;
-				
-				/*
-				default:
-				// Custom Fields
-				if('cf_' == substr($field,0,3)) {
-				$this->_renderCriteriaCustomField($tpl, substr($field,3));
-				} else {
-				echo ' ';
-				}
-				break;
-				*/
-		}
 	}
 
 	function renderCriteriaParam($param) {
@@ -948,6 +899,25 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		$url_writer = DevblocksPlatform::services()->url();
 		$url = $url_writer->writeNoProxy('c=profiles&type=freshbooks_invoice&id='.$context_id, true);
 		return $url;
+	}
+	
+	function profileGetFields($model=null) {
+		$translate = DevblocksPlatform::getTranslationService();
+		$properties = [];
+		
+		if(is_null($model))
+			$model = new Model_FreshbooksInvoice();
+		
+		$properties['name'] = array(
+			'label' => mb_ucfirst($translate->_('common.name')),
+			'type' => Model_CustomField::TYPE_LINK,
+			'value' => $model->id,
+			'params' => [
+				'context' => self::ID,
+			],
+		);
+		
+		return $properties;
 	}
 
 	function getMeta($context_id) {
