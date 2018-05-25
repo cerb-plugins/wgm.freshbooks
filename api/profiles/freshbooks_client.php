@@ -26,6 +26,6 @@ class PageSection_ProfilesFreshbooksClient extends Extension_PageSection {
 		
 		$context = 'wgm.freshbooks.contexts.client';
 		
-		Page_Profiles::renderProfile($context, $context_id);
+		Page_Profiles::renderProfile($context, $context_id, $stack);
 	}
 };
