@@ -4,7 +4,7 @@
 	<name>Freshbooks Integration</name>
 	<description>This plugin provides integration with Freshbooks via their REST API. This plugin is intended to be a bridge used by other plugins to communicate with Freshbooks services. It adds records for Freshbooks Clients.  Plugin development has been sponsored by Nolan Interactive - http://www.nolaninteractive.com/</description>
 	<author>Webgroup Media, LLC.</author>
-	<version>1.7.0</version>
+	<version>1.7.1</version>
 	<link>http://www.cerbweb.com/book/latest/plugins/wgm.freshbooks.html</link>
 	<image>plugin.png</image>
 

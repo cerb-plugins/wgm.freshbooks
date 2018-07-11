@@ -421,6 +421,24 @@ class SearchFields_FreshbooksInvoice extends DevblocksSearchFields {
 		return false;
 	}
 	
+	static function getFieldForSubtotalKey($key, array $query_fields, array $search_fields, $primary_key) {
+		switch($key) {
+		}
+		
+		return parent::getFieldForSubtotalKey($key, $query_fields, $search_fields, $primary_key);
+	}
+	
+	static function getLabelsForKeyValues($key, $values) {
+		switch($key) {
+			case SearchFields_FreshbooksInvoice::ID:
+				$models = DAO_FreshbooksInvoice::getIds($values);
+				return array_column(DevblocksPlatform::objectsToArrays($models), 'name', 'id');
+				break;
+		}
+		
+		return parent::getLabelsForKeyValues($key, $values);
+	}
+	
 	/**
 	 * @return DevblocksSearchField[]
 	 */
