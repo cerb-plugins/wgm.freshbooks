@@ -896,6 +896,8 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 };
 
 class Context_FreshbooksInvoice extends Extension_DevblocksContext implements IDevblocksContextProfile { //, IDevblocksContextPeek, IDevblocksContextImport
+	const ID = 'wgm.freshbooks.contexts.invoice';
+	
 	static function isReadableByActor($models, $actor) {
 		// Everyone can view
 		return CerberusContexts::allowEverything($models);
