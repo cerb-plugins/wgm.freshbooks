@@ -39,5 +39,5 @@ Screenshots
 -----------
 ### Configuring API authentication
 ![](https://github.com/cerb-plugins/wgm.freshbooks/wiki/freshbooks_config.png)
-### Linking Freshbooks clients to Cerb5 organizations
+### Linking Freshbooks clients to Cerb organizations
 ![](https://github.com/cerb-plugins/wgm.freshbooks/wiki/freshbooks_link_orgs.png)
