@@ -171,7 +171,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	 * @return Model_WgmFreshbooksClient[]
 	 */
 	static private function _getObjectsFromResult($rs) {
-		$objects = array();
+		$objects = [];
 		
 		if(!($rs instanceof mysqli_result))
 			return false;
@@ -218,7 +218,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 	public static function getSearchQueryComponents($columns, $params, $sortBy=null, $sortAsc=null) {
 		$fields = SearchFields_WgmFreshbooksClient::getFields();
 		
-		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, 'SearchFields_WgmFreshbooksClient', $sortBy);
+		list(,$wheres) = parent::_parseSearchParams($params, $columns, 'SearchFields_WgmFreshbooksClient', $sortBy);
 		
 		$select_sql = sprintf("SELECT ".
 			"wgm_freshbooks_client.id as %s, ".
@@ -304,7 +304,7 @@ class DAO_WgmFreshbooksClient extends Cerb_ORMHelper {
 		if(!($rs instanceof mysqli_result))
 			return false;
 		
-		$results = array();
+		$results = [];
 		
 		while($row = mysqli_fetch_assoc($rs)) {
 			$object_id = intval($row[SearchFields_WgmFreshbooksClient::ID]);
@@ -627,7 +627,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 
 	function renderCriteriaParam($param) {
 		$field = $param->field;
-		$values = !is_array($param->value) ? array($param->value) : $param->value;
 
 		switch($field) {
 			default:
@@ -638,8 +637,6 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 	
 	function renderVirtualCriteria($param) {
 		$key = $param->field;
-		
-		$translate = DevblocksPlatform::getTranslationService();
 		
 		switch($key) {
 			case SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK:
@@ -686,17 +683,17 @@ class View_WgmFreshbooksClient extends C4_AbstractView implements IAbstractView_
 				break;
 				
 			case SearchFields_WgmFreshbooksClient::VIRTUAL_CONTEXT_LINK:
-				@$context_links = DevblocksPlatform::importGPC($_REQUEST['context_link'],'array',array());
+				@$context_links = DevblocksPlatform::importGPC($_REQUEST['context_link'],'array',[]);
 				$criteria = new DevblocksSearchCriteria($field,DevblocksSearchCriteria::OPER_IN,$context_links);
 				break;
 				
 			case SearchFields_WgmFreshbooksClient::VIRTUAL_HAS_FIELDSET:
-				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',array());
+				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',[]);
 				$criteria = new DevblocksSearchCriteria($field,DevblocksSearchCriteria::OPER_IN,$options);
 				break;
 				
 			case SearchFields_WgmFreshbooksClient::VIRTUAL_WATCHERS:
-				@$worker_ids = DevblocksPlatform::importGPC($_REQUEST['worker_id'],'array',array());
+				@$worker_ids = DevblocksPlatform::importGPC($_REQUEST['worker_id'],'array',[]);
 				$criteria = new DevblocksSearchCriteria($field,$oper,$worker_ids);
 				break;
 		}
@@ -837,7 +834,7 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		);
 		
 		// Token values
-		$token_values = array();
+		$token_values = [];
 		
 		$token_values['_context'] = 'wgm.freshbooks.contexts.client';
 		$token_values['_types'] = $token_types;
@@ -868,6 +865,11 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		];
 	}
 	
+	function getKeyMeta() {
+		$keys = parent::getKeyMeta();
+		return $keys;
+	}
+	
 	function getDaoFieldsFromKeyAndValue($key, $value, &$out_fields, &$error) {
 		switch(DevblocksPlatform::strLower($key)) {
 			case 'links':
@@ -878,6 +880,11 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		return true;
 	}
 	
+	function lazyLoadGetKeys() {
+		$lazy_keys = parent::lazyLoadGetKeys();
+		return $lazy_keys;
+	}
+	
 	function lazyLoadContextValues($token, $dictionary) {
 		if(!isset($dictionary['id']))
 			return;
@@ -886,10 +893,10 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$context_id = $dictionary['id'];
 		
 		@$is_loaded = $dictionary['_loaded'];
-		$values = array();
+		$values = [];
 		
 		if(!$is_loaded) {
-			$labels = array();
+			$labels = [];
 			CerberusContexts::getContext($context, $context_id, $labels, $values, null, true, true);
 		}
 		
@@ -938,7 +945,7 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		return $view;
 	}
 	
-	function getView($context=null, $context_id=null, $options=array(), $view_id=null) {
+	function getView($context=null, $context_id=null, $options=[], $view_id=null) {
 		$view_id = !empty($view_id) ? $view_id : str_replace('.','_',$this->id);
 		
 		$defaults = C4_AbstractViewModel::loadFromClass($this->getViewClass());
@@ -947,7 +954,7 @@ class Context_WgmFreshbooksClient extends Extension_DevblocksContext implements 
 		$view = C4_AbstractViewLoader::getView($view_id, $defaults);
 		$view->name = 'Freshbooks Clients';
 		
-		$params_req = array();
+		$params_req = [];
 		
 		if(!empty($context) && !empty($context_id)) {
 			$params_req = array(

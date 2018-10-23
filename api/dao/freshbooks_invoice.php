@@ -186,7 +186,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 		if(!($rs instanceof mysqli_result))
 			return false;
 		
-		$objects = array();
+		$objects = [];
 
 		while($row = mysqli_fetch_assoc($rs)) {
 			$object = new Model_FreshbooksInvoice();
@@ -240,7 +240,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 	public static function getSearchQueryComponents($columns, $params, $sortBy=null, $sortAsc=null) {
 		$fields = SearchFields_FreshbooksInvoice::getFields();
 
-		list($tables,$wheres) = parent::_parseSearchParams($params, $columns, 'SearchFields_FreshbooksInvoice', $sortBy);
+		list(,$wheres) = parent::_parseSearchParams($params, $columns, 'SearchFields_FreshbooksInvoice', $sortBy);
 
 		$select_sql = sprintf("SELECT ".
 			"freshbooks_invoice.id as %s, ".
@@ -324,7 +324,7 @@ class DAO_FreshbooksInvoice extends Cerb_ORMHelper {
 		if(!($rs instanceof mysqli_result))
 			return false;
 
-		$results = array();
+		$results = [];
 
 		while($row = mysqli_fetch_assoc($rs)) {
 			$object_id = intval($row[SearchFields_FreshbooksInvoice::ID]);
@@ -550,7 +550,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	function getSubtotalFields() {
 		$all_fields = $this->getParamsAvailable(true);
 
-		$fields = array();
+		$fields = [];
 
 		if(is_array($all_fields))
 		foreach($all_fields as $field_key => $field_model) {
@@ -584,12 +584,12 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	}
 
 	function getSubtotalCounts($column) {
-		$counts = array();
+		$counts = [];
 		$fields = $this->getFields();
 		$context = 'wgm.freshbooks.contexts.invoice';
 
 		if(!isset($fields[$column]))
-			return array();
+			return [];
 
 		switch($column) {
 			case SearchFields_FreshbooksInvoice::STATUS:
@@ -730,12 +730,12 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 			case 'status':
 				$field_key = SearchFields_FreshbooksInvoice::STATUS;
 				$oper = null;
-				$patterns = array();
+				$patterns = [];
 				
 				CerbQuickSearchLexer::getOperArrayFromTokens($tokens, $oper, $patterns);
 				
 				$statuses = DAO_FreshbooksInvoice::getStatuses();
-				$values = array();
+				$values = [];
 				
 				if(is_array($patterns))
 				foreach($patterns as $pattern) {
@@ -793,7 +793,7 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 		switch($field) {
 			case SearchFields_FreshbooksInvoice::STATUS:
 				$statuses = DAO_FreshbooksInvoice::getStatuses();
-				$strings = array();
+				$strings = [];
 
 				foreach($values as $k) {
 					if(isset($statuses[$k]))
@@ -811,8 +811,6 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 	
 	function renderVirtualCriteria($param) {
 		$key = $param->field;
-		
-		$translate = DevblocksPlatform::getTranslationService();
 		
 		switch($key) {
 			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
@@ -859,22 +857,22 @@ class View_FreshbooksInvoice extends C4_AbstractView implements IAbstractView_Su
 				break;
 
 			case SearchFields_FreshbooksInvoice::STATUS:
-				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',array());
+				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',[]);
 				$criteria = new DevblocksSearchCriteria($field,$oper,$options);
 				break;
 				
 			case SearchFields_FreshbooksInvoice::VIRTUAL_CONTEXT_LINK:
-				@$context_links = DevblocksPlatform::importGPC($_REQUEST['context_link'],'array',array());
+				@$context_links = DevblocksPlatform::importGPC($_REQUEST['context_link'],'array',[]);
 				$criteria = new DevblocksSearchCriteria($field,DevblocksSearchCriteria::OPER_IN,$context_links);
 				break;
 				
 			case SearchFields_FreshbooksInvoice::VIRTUAL_HAS_FIELDSET:
-				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',array());
+				@$options = DevblocksPlatform::importGPC($_REQUEST['options'],'array',[]);
 				$criteria = new DevblocksSearchCriteria($field,DevblocksSearchCriteria::OPER_IN,$options);
 				break;
 				
 			case SearchFields_FreshbooksInvoice::VIRTUAL_WATCHERS:
-				@$worker_ids = DevblocksPlatform::importGPC($_REQUEST['worker_id'],'array',array());
+				@$worker_ids = DevblocksPlatform::importGPC($_REQUEST['worker_id'],'array',[]);
 				$criteria = new DevblocksSearchCriteria($field,$oper,$worker_ids);
 				break;
 				
@@ -1035,7 +1033,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		);
 
 		// Token values
-		$token_values = array();
+		$token_values = [];
 
 		$token_values['_context'] = 'wgm.freshbooks.contexts.invoice';
 		$token_values['_types'] = $token_types;
@@ -1072,8 +1070,8 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		}
 
 		// Client
-		$merge_token_labels = array();
-		$merge_token_values = array();
+		$merge_token_labels = [];
+		$merge_token_values = [];
 		CerberusContexts::getContext('wgm.freshbooks.contexts.client', null, $merge_token_labels, $merge_token_values, null, true);
 
 		CerberusContexts::merge(
@@ -1101,6 +1099,11 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		];
 	}
 	
+	function getKeyMeta() {
+		$keys = parent::getKeyMeta();
+		return $keys;
+	}
+	
 	function getDaoFieldsFromKeyAndValue($key, $value, &$out_fields, &$error) {
 		switch(DevblocksPlatform::strLower($key)) {
 			case 'links':
@@ -1109,6 +1112,11 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		}
 		
 		return true;
+	}
+	
+	function lazyLoadGetKeys() {
+		$lazy_keys = parent::lazyLoadGetKeys();
+		return $lazy_keys;
 	}
 
 	function lazyLoadContextValues($token, $dictionary) {
@@ -1119,10 +1127,10 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		$context_id = $dictionary['id'];
 
 		@$is_loaded = $dictionary['_loaded'];
-		$values = array();
+		$values = [];
 
 		if(!$is_loaded) {
-			$labels = array();
+			$labels = [];
 			CerberusContexts::getContext($context, $context_id, $labels, $values, null, true, true);
 		}
 
@@ -1171,7 +1179,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		return $view;
 	}
 
-	function getView($context=null, $context_id=null, $options=array(), $view_id=null) {
+	function getView($context=null, $context_id=null, $options=[], $view_id=null) {
 		$view_id = !empty($view_id) ? $view_id : str_replace('.','_',$this->id);
 
 		$defaults = C4_AbstractViewModel::loadFromClass($this->getViewClass());
@@ -1180,7 +1188,7 @@ class Context_FreshbooksInvoice extends Extension_DevblocksContext implements ID
 		$view = C4_AbstractViewLoader::getView($view_id, $defaults);
 		$view->name = 'Freshbooks Invoices';
 
-		$params_req = array();
+		$params_req = [];
 
 		if(!empty($context) && !empty($context_id)) {
 			$params_req = array(
